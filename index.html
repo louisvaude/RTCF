@@ -386,7 +386,6 @@ function updateFab(){
   const fab=document.getElementById('fab');
   const lbl=document.getElementById('fab-lbl');
   if(curTab==='fleurs'){fab.classList.remove('hidden');lbl.textContent='Ajouter une fleur';}
-  else if(curTab==='equipe'){fab.classList.remove('hidden');lbl.textContent='Ajouter une joueuse';}
   else fab.classList.add('hidden');
 }
 
@@ -792,7 +791,6 @@ function goTab(t){
 }
 function onFab(){
   if(curTab==='fleurs') openSheet('flower');
-  else if(curTab==='equipe') openSheet('player');
 }
 
 // ── SHEET ─────────────────────────────────────────────────────────────────────
