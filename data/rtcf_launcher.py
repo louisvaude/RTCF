@@ -14,7 +14,7 @@ def main():
     if getattr(sys, 'frozen', False):
         src = os.path.join(sys._MEIPASS, 'rtcf_fleurs.html')
     else:
-        src = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rtcf_fleurs.html')
+        src = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'rtcf_fleurs.html')
 
     # Copie / mise à jour du fichier HTML
     os.makedirs(app_dir, exist_ok=True)
