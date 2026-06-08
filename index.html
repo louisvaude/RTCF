@@ -326,8 +326,29 @@ async function checkSync(){
         localStorage.setItem(SK,JSON.stringify(D));
         refreshAll();
         showToast('🔄 Données mises à jour');
+        logEvent('sync_update');
       }
     }
+  }catch(e){}
+}
+
+// ── IT Logging ────────────────────────────────────────────────────────────────
+function logEvent(event,detail){
+  try{
+    const pname=myId&&D?((D.players||[]).find(x=>x.id===myId)||{}).name||null:null;
+    fetch(`${SUPA_URL}/rest/v1/rtcf_logs`,{
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        event,
+        player_id:myId||null,
+        player_name:pname,
+        ua:navigator.userAgent,
+        screen:screen.width+'x'+screen.height,
+        lang:navigator.language,
+        detail:detail||null
+      })
+    }).catch(()=>{});
   }catch(e){}
 }
 
@@ -340,6 +361,7 @@ async function initData(){
       D=row.payload; lastUpdAt=row.updated_at;
       localStorage.setItem(SK,JSON.stringify(D));
       setSyncDot('ok');
+      logEvent('sync_ok');
     } else {
       // Première utilisation : on pousse les données initiales vers Supabase
       const local=localStorage.getItem(SK);
@@ -348,12 +370,14 @@ async function initData(){
       const row2=await supaFetch();
       if(row2) lastUpdAt=row2.updated_at;
       setSyncDot('ok');
+      logEvent('sync_ok','first_init');
     }
   } catch(e){
     // Fallback hors ligne
     const local=localStorage.getItem(SK);
     D=local?JSON.parse(local):fromInit();
     setSyncDot('offline');
+    logEvent('sync_offline');
   }
   myId=localStorage.getItem(ME_KEY);
   if(myId&&!D.players.find(p=>p.id===myId)) myId=null;
@@ -375,7 +399,7 @@ function save(){
       if(rows&&rows[0]) lastUpdAt=rows[0].updated_at;
       setSyncDot('ok');
     })
-    .catch(()=>setSyncDot('error'));
+    .catch(()=>{setSyncDot('error');logEvent('sync_error');});
 }
 function isAdmin(){ return myId&&ADMINS.has(myId); }
 function updateNav(){
@@ -385,9 +409,11 @@ function updateNav(){
 function setMe(id){
   myId=id; pinUnlocked=false;
   localStorage.setItem(ME_KEY,id);
+  logEvent('profile_select');
   updateFab(); updateNav(); renderProfil();
 }
 function clearMe(){
+  logEvent('profile_clear');
   myId=null; pinUnlocked=false;
   localStorage.removeItem(ME_KEY);
   updateFab(); updateNav(); renderProfil();
@@ -910,11 +936,13 @@ function doImport(){
 (async()=>{
   try{
     await initData();
+    logEvent('page_load');
   }catch(e){
     // Sécurité : si tout plante, on charge quand même depuis le cache local
     const local=localStorage.getItem(SK);
     D=local?JSON.parse(local):fromInit();
     setSyncDot('offline');
+    logEvent('page_load','fallback_error');
   }finally{
     buildFleursChips();
     refreshAll();

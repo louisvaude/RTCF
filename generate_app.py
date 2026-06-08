@@ -22,14 +22,25 @@ INITIAL = json.dumps({'players':players,'shorts':[short_name(p) for p in players
 # ── CSS ─────────────────────────────────────────────────────────────────────
 CSS = """
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#F7F9FC;color:#111827;display:flex;flex-direction:column;font-size:14px}
-main{flex:1;overflow:hidden;position:relative}
+html{height:100%}
+body{height:100vh;height:100dvh;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#F7F9FC;color:#111827;display:flex;flex-direction:column;font-size:14px}
+main{flex:1;overflow:hidden;position:relative;min-height:0}
+/* Mode paysage mobile : UI compacte */
+@media(orientation:landscape)and(max-height:520px){
+  .hdr{height:40px}
+  .bnav{height:48px}
+  .fab{bottom:56px}
+  .sticky-top{padding-top:6px;padding-bottom:6px}
+  .profbar{padding:6px 13px;margin-bottom:6px}
+  .progcard{padding:8px 14px;margin-bottom:6px}
+  .prog-bar-lg{margin-top:5px}
+  .scroll-area{padding-top:8px;padding-bottom:8px}
+}
 .view{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .18s}
 .view.active{opacity:1;pointer-events:auto}
-.sticky-top{flex-shrink:0;background:#F7F9FC;padding:14px 64px 12px;border-bottom:1px solid #E8ECF2}
-.scroll-area{flex:1;overflow-y:scroll;padding:14px 64px 20px;-webkit-overflow-scrolling:touch}
-.hdr{background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;height:52px;padding:0 64px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:30}
+.sticky-top{flex-shrink:0;background:#F7F9FC;padding:14px clamp(16px,4vw,64px) 12px;border-bottom:1px solid #E8ECF2}
+.scroll-area{flex:1 1 0;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior-y:contain;padding:14px clamp(16px,4vw,64px) 20px}
+.hdr{background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;height:52px;padding:0 clamp(16px,4vw,64px);display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:30}
 .hdr-logo{font-size:.95rem;font-weight:700;flex:1;letter-spacing:-.02em}
 .sync-dot{width:9px;height:9px;border-radius:50%;background:#10B981;flex-shrink:0;transition:background .4s;cursor:default}
 .slbl{font-size:.68rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 8px}
@@ -291,6 +302,9 @@ const SK = 'rtcf_v3', ME_KEY = 'rtcf_me';
 const SUPA_URL = 'https://qbuxhzvnbnjuibbusomn.supabase.co';
 const SUPA_KEY = 'sb_publishable_0QYFdSbpvQQPBmlINtn2fw_Qeo4kDR4';
 let lastUpdAt = null;
+const ADMINS = new Set(['p1']); // Rose Bouquet / Charline
+const ADMIN_PIN = '0909';
+let pinUnlocked = false;
 let D, myId=null, curTab='profil', curFId=null, curPId=null;
 let fleursF='all', moiF='all', moiQ='';
 
@@ -328,8 +342,29 @@ async function checkSync(){
         localStorage.setItem(SK,JSON.stringify(D));
         refreshAll();
         showToast('🔄 Données mises à jour');
+        logEvent('sync_update');
       }
     }
+  }catch(e){}
+}
+
+// ── IT Logging ────────────────────────────────────────────────────────────────
+function logEvent(event,detail){
+  try{
+    const pname=myId&&D?((D.players||[]).find(x=>x.id===myId)||{}).name||null:null;
+    fetch(`${SUPA_URL}/rest/v1/rtcf_logs`,{
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        event,
+        player_id:myId||null,
+        player_name:pname,
+        ua:navigator.userAgent,
+        screen:screen.width+'x'+screen.height,
+        lang:navigator.language,
+        detail:detail||null
+      })
+    }).catch(()=>{});
   }catch(e){}
 }
 
@@ -342,6 +377,7 @@ async function initData(){
       D=row.payload; lastUpdAt=row.updated_at;
       localStorage.setItem(SK,JSON.stringify(D));
       setSyncDot('ok');
+      logEvent('sync_ok');
     } else {
       // Première utilisation : on pousse les données initiales vers Supabase
       const local=localStorage.getItem(SK);
@@ -350,12 +386,14 @@ async function initData(){
       const row2=await supaFetch();
       if(row2) lastUpdAt=row2.updated_at;
       setSyncDot('ok');
+      logEvent('sync_ok','first_init');
     }
   } catch(e){
     // Fallback hors ligne
     const local=localStorage.getItem(SK);
     D=local?JSON.parse(local):fromInit();
     setSyncDot('offline');
+    logEvent('sync_offline');
   }
   myId=localStorage.getItem(ME_KEY);
   if(myId&&!D.players.find(p=>p.id===myId)) myId=null;
@@ -377,21 +415,29 @@ function save(){
       if(rows&&rows[0]) lastUpdAt=rows[0].updated_at;
       setSyncDot('ok');
     })
-    .catch(()=>setSyncDot('error'));
+    .catch(()=>{setSyncDot('error');logEvent('sync_error');});
+}
+function isAdmin(){ return myId&&ADMINS.has(myId); }
+function updateNav(){
+  const btn=document.querySelector('.nbtn[data-tab="gerer"]');
+  if(btn) btn.style.display=isAdmin()?'':'none';
 }
 function setMe(id){
-  myId=id; localStorage.setItem(ME_KEY,id);
-  updateFab(); renderProfil();
+  myId=id; pinUnlocked=false;
+  localStorage.setItem(ME_KEY,id);
+  logEvent('profile_select');
+  updateFab(); updateNav(); renderProfil();
 }
 function clearMe(){
-  myId=null; localStorage.removeItem(ME_KEY);
-  updateFab(); renderProfil();
+  logEvent('profile_clear');
+  myId=null; pinUnlocked=false;
+  localStorage.removeItem(ME_KEY);
+  updateFab(); updateNav(); renderProfil();
 }
 function updateFab(){
   const fab=document.getElementById('fab');
   const lbl=document.getElementById('fab-lbl');
   if(curTab==='fleurs'){fab.classList.remove('hidden');lbl.textContent='Ajouter une fleur';}
-  else if(curTab==='equipe'){fab.classList.remove('hidden');lbl.textContent='Ajouter une joueuse';}
   else fab.classList.add('hidden');
 }
 
@@ -433,6 +479,7 @@ function resetData(){
 // ── Utils ────────────────────────────────────────────────────────────────────
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function pseudo(n){return n.includes('/')?n.split('/')[0].trim():n;}
 function pOwned(pid){return D.flowers.filter(f=>f.owned.includes(pid)).length;}
 function pPct(pid){return D.flowers.length?pOwned(pid)/D.flowers.length*100:0;}
 function fPct(f){return D.players.length?f.owned.length/D.players.length*100:0;}
@@ -518,7 +565,7 @@ function renderProfil(){
         <div class="profavo">${initials}</div>
         <div class="profinfo">
           <div class="profname">${esc(me.short)}</div>
-          <div class="proffull">${esc(me.name)}</div>
+          <div class="proffull">${esc(pseudo(me.name))}</div>
         </div>
         <button class="chg-btn" onclick="clearMe()">Changer</button>
       </div>
@@ -570,7 +617,7 @@ function renderOnboarding(el){
           <button class="ppbtn" onclick="setMe('${p.id}')">
             <div class="ppbtn-ico">👤</div>
             <div class="ppbtn-name">${esc(p.short)}</div>
-            <div class="ppbtn-full">${esc(p.name)}</div>
+            <div class="ppbtn-full">${esc(pseudo(p.name))}</div>
           </button>`).join('')}
       </div>
     </div>`;
@@ -696,7 +743,7 @@ function renderEquipe(){
       <div class="litem-ico" style="${p.id===myId?'background:#FCE4EC;color:#880E4F':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👤'}</div>
       <div class="litem-body">
         <div class="litem-name">${esc(p.short)}${p.id===myId?' <span style="font-size:.68rem;color:#C2185B;font-weight:600">(moi)</span>':''}</div>
-        <div class="litem-sub">${esc(p.name)}</div>
+        <div class="litem-sub">${esc(pseudo(p.name))}</div>
         <div class="bar"><div class="bar-fill bgr" style="width:${p.pct.toFixed(1)}%"></div></div>
       </div>
       <div class="litem-right">
@@ -764,7 +811,7 @@ function renderPlayerDetail(id){
     <div class="card" style="text-align:center;margin-bottom:14px">
       <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;font-size:1.1rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">${initials}</div>
       <div style="font-weight:700;font-size:.95rem">${esc(p.short)}</div>
-      <div style="font-size:.75rem;color:#9CA3AF;margin-top:2px">${esc(p.name)}</div>
+      <div style="font-size:.75rem;color:#9CA3AF;margin-top:2px">${esc(pseudo(p.name))}</div>
       <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:12px">
         <span style="font-size:1.6rem;font-weight:800">${c}</span>
         <span style="font-size:.8rem;color:#9CA3AF">/ ${nF} fleurs</span>
@@ -790,14 +837,43 @@ function closeDetail(t){document.getElementById('dv-'+t).classList.remove('open'
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function goTab(t){
+  if(t==='gerer'){
+    if(!isAdmin()) return;
+    if(!pinUnlocked){ openPinSheet(); return; }
+  }
   curTab=t;
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='v-'+t));
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   updateFab();
 }
+function openPinSheet(){
+  document.getElementById('sh-body').innerHTML=`
+    <div class="sh-title">🔒 Accès administrateur</div>
+    <p style="font-size:.82rem;color:#9CA3AF;margin-bottom:14px">Entrez le code PIN pour accéder à la gestion</p>
+    <input class="sh-input" id="pin-inp" type="password" inputmode="numeric" maxlength="4"
+      placeholder="Code PIN" onkeydown="if(event.key==='Enter')submitPin()">
+    <div id="pin-err" style="color:#B91C1C;font-size:.78rem;margin-bottom:10px;display:none">Code incorrect ❌</div>
+    <div class="sh-btns">
+      <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn btn-pk" onclick="submitPin()">Confirmer</button>
+    </div>`;
+  document.getElementById('shbg').classList.add('open');
+  document.getElementById('sheet').classList.add('open');
+  setTimeout(()=>{const el=document.getElementById('pin-inp');if(el)el.focus();},340);
+}
+function submitPin(){
+  const val=document.getElementById('pin-inp')?.value;
+  if(val===ADMIN_PIN){
+    pinUnlocked=true; closeSheet(); goTab('gerer');
+  } else {
+    const inp=document.getElementById('pin-inp');
+    const err=document.getElementById('pin-err');
+    if(inp){inp.value='';inp.style.borderColor='#B91C1C';}
+    if(err) err.style.display='';
+  }
+}
 function onFab(){
   if(curTab==='fleurs') openSheet('flower');
-  else if(curTab==='equipe') openSheet('player');
 }
 
 // ── SHEET ─────────────────────────────────────────────────────────────────────
@@ -876,15 +952,18 @@ function doImport(){
 (async()=>{
   try{
     await initData();
+    logEvent('page_load');
   }catch(e){
     // Sécurité : si tout plante, on charge quand même depuis le cache local
     const local=localStorage.getItem(SK);
     D=local?JSON.parse(local):fromInit();
     setSyncDot('offline');
+    logEvent('page_load','fallback_error');
   }finally{
     buildFleursChips();
     refreshAll();
     updateFab();
+    updateNav();
     document.getElementById('loading').style.display='none';
   }
   setInterval(checkSync,30000);
