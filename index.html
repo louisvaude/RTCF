@@ -522,7 +522,7 @@ function renderProfil(){
         <div class="profavo">${initials}</div>
         <div class="profinfo">
           <div class="profname">${esc(me.short)}</div>
-          <div class="proffull">${esc(me.name)}</div>
+          <div class="proffull">${esc(me.name.includes('/')?me.name.split('/')[0].trim():me.name)}</div>
         </div>
         <button class="chg-btn" onclick="clearMe()">Changer</button>
       </div>
