@@ -437,6 +437,7 @@ function resetData(){
 // ── Utils ────────────────────────────────────────────────────────────────────
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function pseudo(n){return n.includes('/')?n.split('/')[0].trim():n;}
 function pOwned(pid){return D.flowers.filter(f=>f.owned.includes(pid)).length;}
 function pPct(pid){return D.flowers.length?pOwned(pid)/D.flowers.length*100:0;}
 function fPct(f){return D.players.length?f.owned.length/D.players.length*100:0;}
@@ -522,7 +523,7 @@ function renderProfil(){
         <div class="profavo">${initials}</div>
         <div class="profinfo">
           <div class="profname">${esc(me.short)}</div>
-          <div class="proffull">${esc(me.name.includes('/')?me.name.split('/')[0].trim():me.name)}</div>
+          <div class="proffull">${esc(pseudo(me.name))}</div>
         </div>
         <button class="chg-btn" onclick="clearMe()">Changer</button>
       </div>
@@ -574,7 +575,7 @@ function renderOnboarding(el){
           <button class="ppbtn" onclick="setMe('${p.id}')">
             <div class="ppbtn-ico">👤</div>
             <div class="ppbtn-name">${esc(p.short)}</div>
-            <div class="ppbtn-full">${esc(p.name)}</div>
+            <div class="ppbtn-full">${esc(pseudo(p.name))}</div>
           </button>`).join('')}
       </div>
     </div>`;
@@ -700,7 +701,7 @@ function renderEquipe(){
       <div class="litem-ico" style="${p.id===myId?'background:#FCE4EC;color:#880E4F':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👤'}</div>
       <div class="litem-body">
         <div class="litem-name">${esc(p.short)}${p.id===myId?' <span style="font-size:.68rem;color:#C2185B;font-weight:600">(moi)</span>':''}</div>
-        <div class="litem-sub">${esc(p.name)}</div>
+        <div class="litem-sub">${esc(pseudo(p.name))}</div>
         <div class="bar"><div class="bar-fill bgr" style="width:${p.pct.toFixed(1)}%"></div></div>
       </div>
       <div class="litem-right">
@@ -768,7 +769,7 @@ function renderPlayerDetail(id){
     <div class="card" style="text-align:center;margin-bottom:14px">
       <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;font-size:1.1rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">${initials}</div>
       <div style="font-weight:700;font-size:.95rem">${esc(p.short)}</div>
-      <div style="font-size:.75rem;color:#9CA3AF;margin-top:2px">${esc(p.name)}</div>
+      <div style="font-size:.75rem;color:#9CA3AF;margin-top:2px">${esc(pseudo(p.name))}</div>
       <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:12px">
         <span style="font-size:1.6rem;font-weight:800">${c}</span>
         <span style="font-size:.8rem;color:#9CA3AF">/ ${nF} fleurs</span>
