@@ -12,9 +12,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#F7F9FC;color:#11182
 main{flex:1;overflow:hidden;position:relative}
 .view{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .18s}
 .view.active{opacity:1;pointer-events:auto}
-.sticky-top{flex-shrink:0;background:#F7F9FC;padding:14px 64px 12px;border-bottom:1px solid #E8ECF2}
-.scroll-area{flex:1;overflow-y:scroll;padding:14px 64px 20px;-webkit-overflow-scrolling:touch}
-.hdr{background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;height:52px;padding:0 64px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:30}
+.sticky-top{flex-shrink:0;background:#F7F9FC;padding:14px clamp(16px,4vw,64px) 12px;border-bottom:1px solid #E8ECF2}
+.scroll-area{flex:1;overflow-y:scroll;padding:14px clamp(16px,4vw,64px) 20px;-webkit-overflow-scrolling:touch}
+.hdr{background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;height:52px;padding:0 clamp(16px,4vw,64px);display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:30}
 .hdr-logo{font-size:.95rem;font-weight:700;flex:1;letter-spacing:-.02em}
 .sync-dot{width:9px;height:9px;border-radius:50%;background:#10B981;flex-shrink:0;transition:background .4s;cursor:default}
 .slbl{font-size:.68rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 8px}
