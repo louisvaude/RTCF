@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="theme-color" content="#C2185B">
+<title>RTCF · Pétales</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#F7F9FC;color:#111827;display:flex;flex-direction:column;font-size:14px}
+main{flex:1;overflow:hidden;position:relative}
+.view{position:absolute;inset:0;overflow:hidden;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .18s}
+.view.active{opacity:1;pointer-events:auto}
+.sticky-top{flex-shrink:0;background:#F7F9FC;padding:14px 64px 12px;border-bottom:1px solid #E8ECF2}
+.scroll-area{flex:1;overflow-y:scroll;padding:14px 64px 20px;-webkit-overflow-scrolling:touch}
+.hdr{background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;height:52px;padding:0 64px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:30}
+.hdr-logo{font-size:.95rem;font-weight:700;flex:1;letter-spacing:-.02em}
+.sync-dot{width:9px;height:9px;border-radius:50%;background:#10B981;flex-shrink:0;transition:background .4s;cursor:default}
+.slbl{font-size:.68rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 8px}
+.slbl:first-child{margin-top:0}
+.card{background:#fff;border:1px solid #E8ECF2;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:10px}
+.litem{background:#fff;border:1px solid #E8ECF2;border-radius:10px;padding:11px 13px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:11px;transition:border-color .12s,background .12s}
+.litem:hover{border-color:#C2185B;background:#FFF0F5}
+.litem:active{background:#FCE4EC}
+.litem-ico{width:34px;height:34px;border-radius:8px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.litem-body{flex:1;min-width:0}
+.litem-name{font-size:.875rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#111827}
+.litem-sub{font-size:.72rem;color:#9CA3AF;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.litem-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.chevron{color:#E8ECF2;font-size:.8rem}
+.badge{border-radius:5px;padding:2px 7px;font-size:.7rem;font-weight:600;font-variant-numeric:tabular-nums}
+.b-pk{background:#FCE4EC;color:#880E4F}
+.b-gr{background:#D1FAE5;color:#047857}
+.b-0{background:#F1F5F9;color:#9CA3AF}
+.b-am{background:#FEF3C7;color:#B45309}
+.bar{height:3px;border-radius:2px;background:#F1F5F9;margin-top:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
+.bpk{background:linear-gradient(135deg,#C2185B,#6D28D9)}
+.bgr{background:linear-gradient(90deg,#059669,#34D399)}
+.sbox{position:relative}
+.sinput{width:100%;border:1px solid #E8ECF2;border-radius:10px;padding:9px 12px 9px 36px;font-size:.875rem;background:#fff;color:#111827;outline:none;box-shadow:0 1px 3px rgba(0,0,0,.07);transition:border-color .15s}
+.sinput:focus{border-color:#C2185B;box-shadow:0 0 0 3px rgba(194,24,91,.1)}
+.sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.8rem;color:#9CA3AF;pointer-events:none}
+.fchips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-top:8px;scrollbar-width:none}
+.fchips::-webkit-scrollbar{display:none}
+.fchip{border:1px solid #E8ECF2;border-radius:5px;padding:4px 10px;font-size:.72rem;background:#fff;color:#4B5563;cursor:pointer;white-space:nowrap;font-weight:500;transition:.12s}
+.fchip.active{background:#C2185B;border-color:#C2185B;color:#fff;font-weight:600}
+.ppgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ppbtn{background:#fff;border:1px solid #E8ECF2;border-radius:10px;padding:14px 10px;cursor:pointer;text-align:center;transition:.12s;box-shadow:0 1px 3px rgba(0,0,0,.07);width:100%}
+.ppbtn:hover{border-color:#C2185B;background:#FFF0F5}
+.ppbtn-ico{font-size:1.5rem;margin-bottom:5px}
+.ppbtn-name{font-size:.82rem;font-weight:700;color:#111827}
+.ppbtn-full{font-size:.67rem;color:#9CA3AF;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profbar{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #E8ECF2;border-radius:10px;padding:11px 13px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:10px}
+.profavo{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#C2185B,#6D28D9);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:#fff;flex-shrink:0}
+.profinfo{flex:1;min-width:0}
+.profname{font-size:.875rem;font-weight:700;color:#111827}
+.proffull{font-size:.7rem;color:#9CA3AF;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chg-btn{background:transparent;border:1px solid #E8ECF2;color:#9CA3AF;border-radius:6px;padding:4px 10px;font-size:.72rem;cursor:pointer;font-weight:500;white-space:nowrap}
+.chg-btn:hover{border-color:#C2185B;color:#C2185B}
+.progcard{background:#fff;border:1px solid #E8ECF2;border-radius:10px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.prog-nums{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+.prog-big{font-size:1.6rem;font-weight:800;color:#111827;line-height:1}
+.prog-total{font-size:.8rem;color:#9CA3AF}
+.prog-pct{font-size:.82rem;font-weight:600;color:#C2185B;margin-left:auto}
+.prog-bar-lg{height:6px;border-radius:3px;background:#F1F5F9;margin-top:8px;overflow:hidden}
+.prog-fill-lg{height:100%;border-radius:3px;background:linear-gradient(135deg,#C2185B,#6D28D9);transition:width .5s ease}
+.prog-sub{font-size:.7rem;color:#9CA3AF;margin-top:5px}
+.qtoggle{border:1px solid transparent;border-radius:6px;padding:5px 11px;cursor:pointer;font-size:.75rem;font-weight:600;white-space:nowrap;transition:.12s;flex-shrink:0}
+.qtoggle.on{background:#D1FAE5;border-color:#059669;color:#047857}
+.qtoggle.off{background:#FCE4EC;border-color:#C2185B;color:#880E4F}
+.qtoggle:active{opacity:.75;transform:scale(.96)}
+.bnav{height:60px;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);border-top:1px solid #E8ECF2;display:flex;flex-shrink:0;z-index:30}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;cursor:pointer;color:#9CA3AF;transition:.12s;padding:6px 0}
+.nbtn.active{color:#C2185B}
+.nico{font-size:1.2rem;line-height:1;transition:transform .12s}
+.nbtn.active .nico{transform:scale(1.1)}
+.nlbl{font-size:.6rem;font-weight:600;letter-spacing:.02em}
+.fab{position:fixed;bottom:74px;right:20px;height:46px;padding:0 20px;border-radius:23px;border:none;background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;font-size:.82rem;font-weight:700;box-shadow:0 4px 14px rgba(194,24,91,.4);cursor:pointer;z-index:40;display:flex;align-items:center;gap:6px;transition:transform .12s,opacity .2s}
+.fab:active{transform:scale(.95)}
+.fab.hidden{opacity:0;pointer-events:none;transform:scale(.8)}
+.shbg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:60;opacity:0;pointer-events:none;transition:opacity .22s}
+.shbg.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;z-index:61;padding:0 18px 34px;transform:translateY(105%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:88vh;overflow-y:auto;box-shadow:0 -4px 24px rgba(0,0,0,.12)}
+.sheet.open{transform:translateY(0)}
+.sh-handle{width:36px;height:3px;background:#E8ECF2;border-radius:2px;margin:12px auto 18px}
+.sh-title{font-size:.95rem;font-weight:700;margin-bottom:14px;color:#111827}
+.sh-input{width:100%;border:1px solid #E8ECF2;border-radius:10px;padding:10px 13px;font-size:.875rem;background:#F7F9FC;color:#111827;outline:none;margin-bottom:12px}
+.sh-input:focus{border-color:#C2185B;box-shadow:0 0 0 3px rgba(194,24,91,.1)}
+.sh-btns{display:flex;gap:8px}
+.picker-inp{width:100%;border:1px solid #E8ECF2;border-radius:10px;padding:9px 13px 9px 36px;font-size:.875rem;background:#F7F9FC;color:#111827;outline:none;margin-bottom:10px}
+.picker-inp:focus{border-color:#C2185B}
+.picker-list{max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.picker-item{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #F1F5F9;cursor:pointer}
+.picker-item:last-child{border-bottom:none}
+.picker-name{flex:1;font-size:.82rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#111827}
+.picker-add{background:#D1FAE5;color:#047857;border:1px solid #059669;border-radius:5px;padding:4px 10px;font-size:.72rem;font-weight:600;cursor:pointer;flex-shrink:0}
+.picker-new{background:#FFF0F5;border:1px solid #FCE4EC;border-radius:10px;padding:11px 13px;margin-top:6px;cursor:pointer;font-size:.82rem;line-height:1.5;color:#4B5563}
+.picker-new strong{color:#C2185B}
+.picker-empty{text-align:center;color:#9CA3AF;padding:20px 0;font-size:.82rem}
+.dview{position:fixed;inset:0;background:#F7F9FC;z-index:50;transform:translateX(105%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+.dview.open{transform:translateX(0)}
+.dhdr{background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;height:52px;padding:0 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.back-btn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:.75rem;font-weight:600}
+.dtitle{flex:1;font-size:.9rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.del-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:.8rem}
+.del-btn:hover{background:rgba(185,28,28,.5)}
+.dbody{flex:1;overflow-y:auto;padding:14px}
+.chip-grid{display:flex;flex-wrap:wrap;gap:5px}
+.ochip{border:1px solid #E8ECF2;border-radius:5px;padding:5px 10px;font-size:.75rem;font-weight:500;cursor:pointer;transition:.12s;background:#fff;color:#4B5563}
+.ochip.on{background:#D1FAE5;border-color:#059669;color:#047857;font-weight:600}
+.ochip:active{transform:scale(.94)}
+.mg-sec{margin-bottom:20px}
+.mg-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-right:14px}
+.mg-title{font-size:.82rem;font-weight:700;color:#111827}
+.add-btn{background:#FCE4EC;color:#880E4F;border:1px solid #C2185B;border-radius:6px;padding:5px 11px;font-size:.72rem;font-weight:600;cursor:pointer}
+.add-btn:hover{background:#C2185B;color:#fff}
+.mgitem{background:#fff;border:1px solid #E8ECF2;border-radius:6px;padding:9px 12px;margin-bottom:5px;display:flex;align-items:center;gap:9px}
+.mgname{flex:1;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#111827}
+.del{background:#FEE2E2;color:#B91C1C;border:1px solid #FECACA;border-radius:5px;padding:4px 9px;font-size:.72rem;cursor:pointer;font-weight:600;flex-shrink:0}
+.del:hover{background:#B91C1C;color:#fff}
+.btn{border:none;border-radius:6px;padding:11px 18px;font-size:.82rem;font-weight:600;cursor:pointer;transition:.12s}
+.btn:active{opacity:.8}
+.btn-pk{background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;flex:1}
+.btn-ghost{background:#F7F9FC;border:1px solid #E8ECF2;color:#4B5563}
+.btn-red{background:#B91C1C;color:#fff;flex:1}
+.btn-outline{display:block;width:100%;background:#fff;border:1px solid #E8ECF2;color:#4B5563;border-radius:10px;padding:10px 16px;font-size:.8rem;cursor:pointer;font-weight:500;text-align:center;margin-bottom:7px;transition:.12s}
+.btn-outline:hover{border-color:#C2185B;color:#C2185B;background:#FFF0F5}
+.cfbg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .18s}
+.cfbg.open{opacity:1;pointer-events:auto}
+.cfbox{background:#fff;border-radius:14px;padding:22px 20px;max-width:310px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.2)}
+.cftitle{font-size:.9rem;font-weight:700;margin-bottom:5px;color:#111827}
+.cfmsg{font-size:.78rem;color:#4B5563;margin-bottom:18px;line-height:1.55}
+.cfbtns{display:flex;gap:8px}
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(50px);background:rgba(17,24,39,.92);color:#fff;border-radius:8px;padding:9px 18px;font-size:.8rem;font-weight:500;z-index:200;transition:transform .25s,opacity .25s;opacity:0;white-space:nowrap;pointer-events:none;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.chart-card{background:#fff;border:1px solid #E8ECF2;border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.chart-inner{display:flex;align-items:center;gap:16px}
+.legend-row{display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid #F1F5F9}
+.legend-row:last-child{border-bottom:none}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.legend-lbl{font-size:.76rem;color:#4B5563;flex:1}
+.legend-n{font-size:.78rem;font-weight:700;color:#111827;min-width:24px;text-align:right}
+.legend-p{font-size:.7rem;color:#9CA3AF;min-width:32px;text-align:right}
+.empty{text-align:center;color:#9CA3AF;padding:28px 10px;font-size:.82rem}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:#F1F5F9;border-radius:4px}
+::-webkit-scrollbar-thumb{background:#C2185B55;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#C2185B}
+</style>
+</head>
+<body>
+
+<div id="loading" style="position:fixed;inset:0;background:#F7F9FC;display:flex;align-items:center;justify-content:center;z-index:300">
+  <div style="text-align:center">
+    <div style="font-size:2.8rem;margin-bottom:12px">🌸</div>
+    <div style="font-size:.9rem;color:#9CA3AF;font-family:'Segoe UI',sans-serif">Chargement…</div>
+  </div>
+</div>
+<div class="hdr">
+  <span class="hdr-logo">🌸 RTCF · Pétales</span>
+  <span id="sync-dot" class="sync-dot" title="Synchronisé"></span>
+</div>
+
+<main>
+  <!-- PROFIL -->
+  <div class="view active" id="v-profil"></div>
+
+  <!-- FLEURS -->
+  <div class="view" id="v-fleurs">
+    <div class="sticky-top">
+      <div class="sbox"><span class="sico">🔍</span>
+        <input class="sinput" id="fleurs-q" type="search" placeholder="Rechercher une fleur…" oninput="renderFleurs()">
+      </div>
+      <div class="fchips" id="fleurs-chips"></div>
+      <div class="chart-card" id="fleurs-chart" style="margin-top:12px;margin-bottom:0"></div>
+    </div>
+    <div class="scroll-area">
+      <div id="fleurs-list"></div>
+    </div>
+  </div>
+
+  <!-- ÉQUIPE -->
+  <div class="view" id="v-equipe">
+    <div class="sticky-top">
+      <div class="sbox"><span class="sico">🔍</span>
+        <input class="sinput" id="eq-q" type="search" placeholder="Rechercher une joueuse…" oninput="renderEquipe()">
+      </div>
+    </div>
+    <div class="scroll-area" id="eq-list"></div>
+  </div>
+
+  <!-- GÉRER -->
+  <div class="view" id="v-gerer">
+    <div class="sticky-top">
+      <div class="mg-hdr"><span class="mg-title">Joueuses</span>
+        <button class="add-btn" onclick="openSheet('player')">+ Ajouter</button></div>
+      <div class="sbox"><span class="sico">🔍</span>
+        <input class="sinput" id="mgp-q" type="search" placeholder="Filtrer les joueuses…" oninput="renderManage()"></div>
+    </div>
+    <div class="scroll-area">
+      <div id="mg-players"></div>
+      <div style="border-top:1px solid #E8ECF2;margin:18px 0 14px"></div>
+      <div class="mg-sec">
+        <div class="mg-hdr"><span class="mg-title">Fleurs</span>
+          <button class="add-btn" onclick="openSheet('flower')">+ Ajouter</button></div>
+        <div class="sbox" style="margin-bottom:8px"><span class="sico">🔍</span>
+          <input class="sinput" id="mgf-q" type="search" placeholder="Filtrer les fleurs…" oninput="renderManage()"></div>
+        <div id="mg-flowers"></div>
+      </div>
+      <div style="border-top:1px solid #E8ECF2;margin:18px 0 14px"></div>
+      <div class="mg-sec">
+        <div class="mg-hdr"><span class="mg-title">Données</span></div>
+        <button class="btn-outline" onclick="doImport()">📂 Importer un fichier JSON</button>
+        <button class="btn-outline" style="color:#B91C1C;border-color:#FECACA" onclick="resetData()">↺ Réinitialiser vers les données initiales</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="bnav">
+  <button class="nbtn active" data-tab="profil" onclick="goTab('profil')">
+    <span class="nico">👤</span><span class="nlbl">Profil</span>
+  </button>
+  <button class="nbtn" data-tab="fleurs" onclick="goTab('fleurs')">
+    <span class="nico">🌸</span><span class="nlbl">Fleurs</span>
+  </button>
+  <button class="nbtn" data-tab="equipe" onclick="goTab('equipe')">
+    <span class="nico">👥</span><span class="nlbl">Équipe</span>
+  </button>
+  <button class="nbtn" data-tab="gerer" onclick="goTab('gerer')">
+    <span class="nico">⚙️</span><span class="nlbl">Gérer</span>
+  </button>
+</nav>
+
+<button class="fab hidden" id="fab" onclick="onFab()"><span>＋</span> <span id="fab-lbl">Nouvelle fleur</span></button>
+
+<div class="shbg" id="shbg" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"><div class="sh-handle"></div><div id="sh-body"></div></div>
+
+<div class="dview" id="dv-flower">
+  <div class="dhdr">
+    <button class="back-btn" onclick="closeDetail('flower')">‹ Retour</button>
+    <span class="dtitle" id="fd-title"></span>
+    <button class="del-btn" onclick="askDel('flower')">🗑</button>
+  </div>
+  <div class="dbody" id="fd-body"></div>
+</div>
+
+<div class="dview" id="dv-player">
+  <div class="dhdr">
+    <button class="back-btn" onclick="closeDetail('player')">‹ Retour</button>
+    <span class="dtitle" id="pd-title"></span>
+    <button class="del-btn" onclick="askDel('player')">🗑</button>
+  </div>
+  <div class="dbody" id="pd-body"></div>
+</div>
+
+<div class="cfbg" id="cfbg">
+  <div class="cfbox">
+    <div class="cftitle" id="cf-title"></div>
+    <div class="cfmsg" id="cf-msg"></div>
+    <div class="cfbtns">
+      <button class="btn btn-ghost" onclick="closeCf()">Annuler</button>
+      <button class="btn btn-red" id="cf-ok">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const INITIAL = {"players": ["Thëmis / Typhanie", "Rose Bouquet / Charline", "Pilily / Ilyana", "Candichou08 / Candide", "Aimilié / Amy", "AuraSekizan / Marine", "NONO / Marie-Noëlle", "Evelyna / Evelyna", "CourtofBloom / Margaux", "Camsouille / Camille", "Princesse hana / Morgane", "Nightshade / Carine", "Caitlyne / Valérie", "Fleuraya / Fleurine", "papoutchitte / Margaux", "TheaLrd / Théa", "LaMicka", "Myrtille / Morgane", "Emma B", "Flore Gardet", "Minuit / Sylvie", "Persefona", "Sydoudou / Sydney", "Eloo", "Chuchette / Charline", "Samantha devis", "Shiro", "Philia", "Sushi / Sophie", "Popynko", "Tania Arsenault", "Fidji", "Ln87", "Orianne"], "shorts": ["Typhanie", "Charline", "Ilyana", "Candide", "Amy", "Marine", "Marie-Noëlle", "Evelyna", "Margaux", "Camille", "Morgane", "Carine", "Valérie", "Fleurine", "Margaux", "Théa", "LaMicka", "Morgane", "Emma", "Flore", "Sylvie", "Persefona", "Sydney", "Eloo", "Charline", "Samantha", "Shiro", "Philia", "Sophie", "Popynko", "Tania", "Fidji", "Ln87", "Orianne"], "flowers": [{"n": "Abysse des Poissons", "o": []}, {"n": "Angel of Paradise", "o": []}, {"n": "Apricot Lotus", "o": [6]}, {"n": "Auspice du Lion Rouge", "o": []}, {"n": "Azure Coral Reef", "o": [3, 6]}, {"n": "Baie Palpitante", "o": [0, 1, 3, 4, 5, 6, 8, 9, 10, 12, 17]}, {"n": "Baie Rougissante", "o": [0, 1, 2, 3, 4, 5, 6, 7, 15, 28]}, {"n": "Balade de la Baleine des Nuages", "o": []}, {"n": "Balancement des Vaguelettes", "o": [1, 3, 6, 8]}, {"n": "Ballon Dôme Arc-en-Ciel", "o": [3, 6]}, {"n": "Bébé des Neiges Duveteux", "o": []}, {"n": "Bénédiction du Lion d'Or", "o": []}, {"n": "Bird of Paradise", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 25, 28]}, {"n": "Blue Baby's Breath", "o": []}, {"n": "Blue Celebration Rose", "o": [6]}, {"n": "Blue Cornflower", "o": [6]}, {"n": "Blue Crystal Butterfly Rose", "o": [5, 6]}, {"n": "Blue Evening Primrose", "o": [3, 4, 5, 6, 8, 10, 15, 22]}, {"n": "Blue Forget-Me-Not", "o": [6]}, {"n": "Blue Halcyon Tree Peony", "o": [0, 3, 4, 6, 8]}, {"n": "Blue Himalayan Poppy", "o": [6, 8, 28]}, {"n": "Blue Hydrangea", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 28]}, {"n": "Blue Jeweled Peony", "o": [0, 6]}, {"n": "Blue Larkspur", "o": [0, 1, 2, 3, 5, 6, 7, 8, 11, 13, 15, 16, 17, 20, 22, 25]}, {"n": "Blue Oleander", "o": [6]}, {"n": "Blue Star Flower", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Bouées aux Palmiers Coco", "o": [0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 22, 28]}, {"n": "Brindille Sorcière", "o": [6]}, {"n": "Cacao Rétro", "o": [0, 1, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 17, 20, 28]}, {"n": "Canard Arc-en-Ciel Joyeux", "o": []}, {"n": "Canard de Plage, Fraicheur d'Eté", "o": [3, 6, 9]}, {"n": "Capricorne-Fard", "o": []}, {"n": "Cèdre de Noël", "o": []}, {"n": "Champagne Gilded Rose", "o": [6]}, {"n": "Champagne Lisianthus", "o": [0, 3, 6]}, {"n": "Chapeau Joyeux", "o": [0, 6, 15]}, {"n": "Christmas Spirit Pine", "o": []}, {"n": "Cloche Dansante", "o": [6]}, {"n": "Clochettes Roses à Parfum Tombant", "o": [3, 6]}, {"n": "Conversation de Thé et Miaou", "o": [6, 28]}, {"n": "Coquillage de Rêve Bleu", "o": []}, {"n": "Coquillage de Rêve Coeur de Flamme", "o": []}, {"n": "Coquillage de Rêve Rose", "o": [5, 6]}, {"n": "Coeur de Rêve Abyssal", "o": [6]}, {"n": "Conversation de Thé et Miaou", "o": [6]}, {"n": "Corail d'Os Saphir", "o": []}, {"n": "Coral Boat Orchid", "o": [6]}, {"n": "Coral Pink Rhododendron", "o": [0, 6, 8]}, {"n": "Crimson Bramble Rose", "o": []}, {"n": "Crimson Dahlia", "o": [6, 8, 10, 12, 17]}, {"n": "Crimson Hollyhock", "o": [4, 5, 6, 11]}, {"n": "Crocus", "o": [0, 28]}, {"n": "Cristal d'Ombre Stellaire", "o": [0, 1, 3, 4, 6, 10, 13, 14, 28]}, {"n": "Cupidulipe", "o": []}, {"n": "Cyclamen Orange", "o": [0, 3, 6, 8]}, {"n": "Cyclamen Rose", "o": [0, 6]}, {"n": "Cyclamen Violet", "o": [0, 1, 3, 6, 8, 13, 28]}, {"n": "Cymbidium Flamme Orange", "o": [5, 6]}, {"n": "Dandelion", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 28]}, {"n": "Dark Red African Violet", "o": [0, 3, 6, 9, 13]}, {"n": "Demeure d'Or Chaleureux", "o": [6]}, {"n": "Demeure Rose Fleurie", "o": [6]}, {"n": "Demeure Violette Etoilée", "o": []}, {"n": "Dendrobium Noble Givré", "o": []}, {"n": "Doux Plaisir Enneigé", "o": []}, {"n": "Doux Rêve Doré", "o": [0, 3, 4, 6]}, {"n": "Eventail de Floraison de Soie", "o": [6]}, {"n": "Eventail de Lueur Brumeuse", "o": []}, {"n": "Eventail de Poussière d'Etoiles", "o": []}, {"n": "Emerald Golden Veil", "o": []}, {"n": "Faon Floral", "o": []}, {"n": "Fleur de Cerisier Lavande", "o": []}, {"n": "Fleur de Cerisier Porcelaine", "o": []}, {"n": "Fleur de Cerisier Rose", "o": []}, {"n": "Fleur de Mer Jaune", "o": []}, {"n": "Fleur de Mer Rouge", "o": [0, 3, 6, 28]}, {"n": "Fleur de Mer Violette", "o": [3, 6]}, {"n": "Fleur d'Eruption Solaire", "o": [6]}, {"n": "Flocon de Neige de Jade", "o": []}, {"n": "Flocon de Neige Rose", "o": []}, {"n": "Flocon de Neige Violet", "o": [5]}, {"n": "Forest Hart", "o": [6]}, {"n": "Fortune du Lion Rose", "o": []}, {"n": "Fortune du Prunier Rouge", "o": []}, {"n": "Freesia Parfumé Jaune", "o": [7]}, {"n": "Freesia Parfumé Rose", "o": []}, {"n": "Freesia Parfumé Violet", "o": []}, {"n": "Gémeau : Ombre des Etoiles Jumelles", "o": [6]}, {"n": "Gloire des Neiges Azur", "o": [0, 3, 6, 28]}, {"n": "Gloire des Neiges Blanche", "o": [0, 3, 6, 8]}, {"n": "Gloire des Neiges Jaune", "o": [0, 3, 4, 6, 7, 9, 15, 24]}, {"n": "Glycine Lunaire", "o": [3, 6, 8]}, {"n": "Golden Bell Forsythia", "o": [6, 8]}, {"n": "Golden Hornet Crabapple", "o": [0, 6]}, {"n": "Golden Spider Lily", "o": [0, 3, 5, 6, 8, 16, 17]}, {"n": "Golden Wintersweet", "o": [3, 4, 6, 10, 12, 15, 28]}, {"n": "Golden Yellow Hollyhock", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 25, 28]}, {"n": "Golden Yellow Pot Marigold", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 28]}, {"n": "Grâce du Dragon", "o": []}, {"n": "Green Cycad", "o": [0, 6, 8, 10, 11, 14, 20]}, {"n": "Green Lisianthus", "o": [0, 1, 3, 4, 5, 6, 8]}, {"n": "Green Silk Willow", "o": []}, {"n": "Grue au Clair de Lune", "o": [6]}, {"n": "Heavenly Palace", "o": []}, {"n": "Hellébore Bleu", "o": []}, {"n": "Hellébore des Neiges", "o": []}, {"n": "Hellébore Rose", "o": []}, {"n": "Heure Paresseuse", "o": [6]}, {"n": "Hibiscus de Chine Cramoisi", "o": [3, 6]}, {"n": "Hibiscus de Chine Jaune", "o": [5, 6, 13]}, {"n": "Hibiscus Fumé", "o": [6, 7]}, {"n": "Innocence en Fleur", "o": []}, {"n": "Ixora Doré", "o": [0, 1, 3, 4, 5, 6, 8, 12, 13, 17, 28]}, {"n": "Ixora Orange", "o": [1, 10, 17, 20]}, {"n": "Ixora Rose", "o": [0, 4, 6, 8]}, {"n": "Jacque Pêche", "o": [3, 6, 8]}, {"n": "Jeune Primevère Flocon de Neige", "o": [3, 4, 6]}, {"n": "Jeune Primevère Rose", "o": [3, 5, 6, 15]}, {"n": "Jeune Primevère Violette", "o": [3, 4, 6, 8]}, {"n": "Lapin de Pâques", "o": []}, {"n": "Lapin Héraut du Printemps", "o": []}, {"n": "L'Heure du Thé de Pâques", "o": []}, {"n": "Light Blue Astilbe", "o": [6, 8]}, {"n": "Light Blue Wisteria", "o": [3, 6, 9]}, {"n": "Light Orange Ping Pong Chrysanthemum", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 25, 28]}, {"n": "Light Orange Verbena", "o": [5, 6]}, {"n": "Light Pink African Violet", "o": [0, 3, 4, 6, 8, 9, 22]}, {"n": "Light Pink Verbena", "o": [6]}, {"n": "Light Purple African Violet", "o": [0, 3, 4, 6, 9, 17, 28]}, {"n": "Light Purple Astilbe", "o": [6, 8]}, {"n": "Lobélie Bleue-Blanche", "o": []}, {"n": "Lotus des Neiges de Cristal", "o": []}, {"n": "Lueur d'Eté", "o": [6]}, {"n": "Magenta Oleander", "o": [0, 6, 13, 28]}, {"n": "Maple Tree", "o": []}, {"n": "Marguerite Jaune", "o": []}, {"n": "Marguerite Lavande", "o": []}, {"n": "Marguerite Rose", "o": []}, {"n": "Maroon Wintersweet", "o": [6, 8]}, {"n": "Midnight Dahlia", "o": [0, 7]}, {"n": "Mignonnerie de Noël", "o": []}, {"n": "Monstera", "o": [4, 6]}, {"n": "Moonlake Peony", "o": [3, 5, 6, 8]}, {"n": "Muflier", "o": []}, {"n": "Mulla-Mulla Jaune", "o": []}, {"n": "Mulla-Mulla Rose", "o": []}, {"n": "Mulla-Mulla Violet", "o": []}, {"n": "Murmure de Bégonia", "o": []}, {"n": "Némésia Azur", "o": [3, 6]}, {"n": "Némésia Chute de Neige", "o": [6, 8]}, {"n": "Némésia Rose", "o": [6, 8]}, {"n": "Oeillet Branchu Rose", "o": [0, 1, 3, 6]}, {"n": "Oeufs aux Couleurs de Rêve", "o": []}, {"n": "Oeuf Surprise", "o": [6]}, {"n": "Or Irremplaçable", "o": []}, {"n": "Orange Amaryllis", "o": [2, 6]}, {"n": "Orange Begonia", "o": [0, 3, 6]}, {"n": "Orange Coral Reef", "o": [6, 17]}, {"n": "Orange Danding Lady Orchid", "o": [5, 6]}, {"n": "Orange Fairy-Lantern", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 20, 22, 24, 25, 27, 28]}, {"n": "Orange Flaming Katy", "o": [0, 6]}, {"n": "Orange Freesia", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 28]}, {"n": "Orange Hibiscus Jewelry Box", "o": [3, 6]}, {"n": "Orange Osmanthus", "o": [6]}, {"n": "Orange Sea Anemone", "o": [6]}, {"n": "Orange Spoon Chrysanthemum", "o": [0, 1, 3, 4, 5, 6, 8]}, {"n": "Orange Star Orchid", "o": [2, 6, 11]}, {"n": "Oreorchis Doré", "o": [0, 1, 3, 4, 5, 6, 8, 10, 11, 13, 15, 16, 17]}, {"n": "Oreorchis Rose", "o": [0, 3, 4, 6, 7, 8, 9, 22]}, {"n": "Oreorchis Violet", "o": [0, 6, 8, 16]}, {"n": "Ourson Surprise", "o": []}, {"n": "Oxalis Jaune", "o": []}, {"n": "Oxalis Orange", "o": []}, {"n": "Oxalis Violet", "o": []}, {"n": "Pacte de Scintilla", "o": [6]}, {"n": "Panier de Gâteau Fleur", "o": [6]}, {"n": "Parfum de Violette", "o": []}, {"n": "Peach Calandiva", "o": [6, 7]}, {"n": "Peach Flamingo Flower", "o": [6, 10, 15]}, {"n": "Peach Hornet Crabapple", "o": [0, 6]}, {"n": "Peach Jeweled Peony", "o": [6]}, {"n": "Peach Larkspur", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 25, 28]}, {"n": "Peach New Dawn Rose", "o": [6]}, {"n": "Peach Unicorn", "o": [6, 8]}, {"n": "Peach Windbell Flower", "o": [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 28]}, {"n": "Peach Wintersweet", "o": [6]}, {"n": "Pearl Magnolia", "o": [3, 5, 6, 15]}, {"n": "Perfume Lily", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 28]}, {"n": "Pétale Ensoleillé", "o": [6]}, {"n": "Petit Sommeil de Lune", "o": [6]}, {"n": "Phlox Blanc Neige", "o": [3, 6, 8]}, {"n": "Phlox Bleu Azur", "o": [0, 3, 6, 8, 13]}, {"n": "Phlox Rose", "o": [0, 3, 4, 5, 6, 8, 11, 13, 22]}, {"n": "Pink Amaryllis", "o": [6, 22]}, {"n": "Pink Anemone", "o": [2, 3, 6, 8, 9, 14, 15, 28]}, {"n": "Pink Astilbe", "o": [0, 3, 6, 8]}, {"n": "Pink Baby's Breath", "o": [0, 3, 6]}, {"n": "Pink Bougainvillea", "o": []}, {"n": "Pink Carnation", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Pink Celebration Rose", "o": [6]}, {"n": "Pink Coral Reef", "o": [6]}, {"n": "Pink Cornflower", "o": [6, 8, 14]}, {"n": "Pink Cosmos", "o": [6]}, {"n": "Pink Crystal Butterfly Rose", "o": [2, 3, 4, 5, 6, 8, 9, 10, 15]}, {"n": "Pink Evening Primrose", "o": [2, 3, 5, 6, 8, 9, 15, 28]}, {"n": "Pink Gerbera Daisy", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 28]}, {"n": "Pink Hibiscus", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 25, 28]}, {"n": "Pink Hibiscus Jewelry Box", "o": [3, 6, 8]}, {"n": "Pink Hydrangea", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 28]}, {"n": "Pink Iron Chopstick Flower", "o": [6, 12]}, {"n": "Pink Lewisia", "o": [6, 8]}, {"n": "Pink Lily", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Pink Lilyturf", "o": [6, 9]}, {"n": "Pink Lisianthus", "o": [0, 3, 6]}, {"n": "Pink Lotus", "o": [6]}, {"n": "Pink Moth Orchid", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Pink Oleander", "o": [0, 6, 10]}, {"n": "Pink Orchid", "o": [0, 3, 6, 8, 9]}, {"n": "Pink Peach Blossom", "o": [0, 1, 3, 5, 6, 8, 28]}, {"n": "Pink Peony Dahlia", "o": [6]}, {"n": "Pink Rhododendron", "o": [6]}, {"n": "Pink Rose", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Pink Spoon Chrysanthemum", "o": [0, 1, 3, 5, 6, 8, 28]}, {"n": "Pink Starry Pollenveil", "o": [3, 6]}, {"n": "Pink Tree Peony", "o": [6, 17]}, {"n": "Pink Tulip", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Pink Unicorn", "o": [6]}, {"n": "Pink Water Lily", "o": [6]}, {"n": "Pink Wisteria", "o": [3, 6, 8]}, {"n": "Plumbago Blanc", "o": [0, 1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 13, 17, 22, 28]}, {"n": "Plumbago Indigo", "o": [3, 5, 6, 15]}, {"n": "Plumbago Rose Clair", "o": [3, 6, 8, 11]}, {"n": "Plume d'Ange", "o": [1, 3, 4, 6]}, {"n": "Plumeria Rose Cerise", "o": [4, 6, 8]}, {"n": "Primevère Cap de Perles", "o": [6, 9, 24]}, {"n": "Primevère des Fées Bleue", "o": [0, 1, 4, 5, 6, 9, 11, 15, 28]}, {"n": "Primevère des Fées Jaune", "o": [0, 2, 5, 7, 15, 28]}, {"n": "Primevère des Fées Violette", "o": [5]}, {"n": "Purple Anemone", "o": [1, 28]}, {"n": "Purple Balloon Flower", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Purple Bougainvillea", "o": [0, 6]}, {"n": "Purple Clematis", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 25, 28]}, {"n": "Purple Cosmos", "o": [4, 6, 8, 28]}, {"n": "Purple Cornflower", "o": [0, 6]}, {"n": "Purple Fairy-Lantern", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 28]}, {"n": "Purple Giant Allium", "o": [4, 6, 8, 11]}, {"n": "Purple Gladiolus", "o": [6]}, {"n": "Purple Glaze Peony", "o": [6]}, {"n": "Purple Hibiscus Jewelry Box", "o": [6]}, {"n": "Purple Hyacinth", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 28]}, {"n": "Purple Hydrangea", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 28]}, {"n": "Purple Iceland Poppy", "o": [6, 8]}, {"n": "Purple Larkspur", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 25, 27, 28]}, {"n": "Purple Lilac", "o": [0, 3, 6, 8]}, {"n": "Purple Lilyturf", "o": [6]}, {"n": "Purple Magnolia", "o": [4, 6]}, {"n": "Purple-Pink Bearded Iris", "o": [6, 8]}, {"n": "Purple Water Hyacinth", "o": []}, {"n": "Queue de Lapin Violette", "o": [1, 6, 8, 13, 28]}, {"n": "Red Amaryllis", "o": [0, 6]}, {"n": "Red Calla Lily", "o": [0, 2, 3, 4, 5, 6, 8, 9, 10, 11, 13, 15, 16, 17, 20, 22, 28]}, {"n": "Red Dancing Lady Orchid", "o": [6, 8]}, {"n": "Red Flamingo Flower", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 28]}, {"n": "Red Hollyhock", "o": [0, 3, 4, 5, 6, 8, 9, 22]}, {"n": "Red Iron Chopstick Flower", "o": [13]}, {"n": "Red Peony", "o": [0]}, {"n": "Red Pineapple Flower", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 28]}, {"n": "Red Rose", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Red Spider Lily", "o": [0, 3, 5, 6, 8, 28]}, {"n": "Red Winterberry", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 28]}, {"n": "Redvein Enkianthus", "o": [0, 1, 2, 3, 5, 6, 7, 8, 9, 11, 14, 15, 16, 17, 20, 22, 24]}, {"n": "Renoncule", "o": [6]}, {"n": "Réunion du Plaqueminier", "o": []}, {"n": "Rêve de Crème Fleurie", "o": []}, {"n": "Rêve de Mer Florale", "o": [6]}, {"n": "Rêve Scintillant", "o": []}, {"n": "Rosa Rubus Rose", "o": []}, {"n": "Rose Bourdon Jaune", "o": [3, 6]}, {"n": "Rose Bourdon Orange", "o": [5, 6, 13, 22]}, {"n": "Rose Bourdon Rose", "o": []}, {"n": "Royaume Floral de Branche de Jade", "o": [6]}, {"n": "Sacred Heart Lily", "o": []}, {"n": "Scabieuse Rose", "o": [0, 6]}, {"n": "Scabieuse Violette", "o": []}, {"n": "Scarlet Iceland Poppy", "o": [6, 8]}, {"n": "Scarlet Sea Anemone", "o": [6]}, {"n": "Sérénade Ardente", "o": []}, {"n": "Sérénade Dorée", "o": []}, {"n": "Silver Cycad", "o": [1, 6, 10, 15]}, {"n": "Silver Osmanthus", "o": [6]}, {"n": "Sky Blue Petunia", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 28]}, {"n": "Soft Pink Hyacinth", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 20, 28]}, {"n": "Soft Pink Petunia", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 28]}, {"n": "Soft Pink Ping Pong Chrysanthemum", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 28]}, {"n": "Soft Pink Silktree Flower", "o": [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 20, 28]}, {"n": "Soft Pink Weeping Cherry", "o": [6, 7, 8]}, {"n": "Sommeil de Nuage Violet", "o": [3, 6]}, {"n": "Sorcière de Sucre Glace", "o": [6]}, {"n": "Sorcière Estivale Chevauchant les Vagues", "o": [6]}, {"n": "Sunflower", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 28]}, {"n": "Taureau Abondance", "o": [6]}, {"n": "Trace du Bélier", "o": [6]}, {"n": "Verseau-Pistes", "o": []}, {"n": "Violet", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Violet Himalayan Poppy", "o": [6, 16, 28]}, {"n": "Violet Unicorn", "o": [6, 8]}, {"n": "Voeu Stellaire", "o": []}, {"n": "White Baby's Breath", "o": [0, 6, 9]}, {"n": "White Blue-Eyed Anemone", "o": [6, 10]}, {"n": "White Bunnycotton", "o": [0, 3, 4, 5, 6, 7, 8, 9, 11, 13, 15, 22, 24, 28]}, {"n": "White Camelia", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 28]}, {"n": "White Chinese Sweetshrub", "o": [6]}, {"n": "White Cosmos", "o": [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 16, 28]}, {"n": "White Daffodil", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 28]}, {"n": "White Daisy", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "White Flamingo Flower", "o": [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 28]}, {"n": "White Gardenia", "o": [0, 3, 4, 6, 8, 10, 13, 17, 28]}, {"n": "White Gladiolus", "o": [0, 6]}, {"n": "White Halcyon Tree Peony", "o": [0, 3, 6, 7]}, {"n": "White Jasmine", "o": [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 28]}, {"n": "White Lily", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "White Lily of the Valley", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "White Lilyturf", "o": [6, 8, 12]}, {"n": "White Morning Dew Lily", "o": [6]}, {"n": "White Murraya", "o": []}, {"n": "White Ping Pong Chrysanthemum", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 25, 28]}, {"n": "White-Purple Clematis", "o": [6]}, {"n": "White River Ark", "o": [6]}, {"n": "White Sea Anemone", "o": [1, 6]}, {"n": "White Star of Bethlehem", "o": [0, 3, 4, 5, 6, 8, 9, 22]}, {"n": "White Thornapple", "o": [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 22, 24, 28]}, {"n": "White Tree Peony", "o": [4, 28]}, {"n": "White Weeping Cherry", "o": [6, 8, 9]}, {"n": "White Jasmine", "o": [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 20, 25]}, {"n": "Winter Jasmine", "o": [2, 5, 6, 8, 14, 28]}, {"n": "Yellow Bearded Iris", "o": [5, 6]}, {"n": "Yellow Bougainvillea", "o": []}, {"n": "Yellow Calla Lily", "o": [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 28]}, {"n": "Yellow Celebration Rose", "o": [4, 6]}, {"n": "Yellow Dancing Lady Orchid", "o": [2, 3, 4, 5, 6, 8, 9, 28]}, {"n": "Yellow Evening Primrose", "o": [3, 5, 6]}, {"n": "Yellow Flaming Katy", "o": [0, 3, 6, 8, 16]}, {"n": "Yellow Gladiolus", "o": [6]}, {"n": "Yellow-Green Boat Orchid", "o": [6]}, {"n": "Yellow Himalayan Poppy", "o": [2, 3, 4, 5, 6, 8, 9, 15, 22, 28]}, {"n": "Yellow Hyacinth", "o": [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 15, 17, 28]}, {"n": "Yellow Iron Chopstick Flower", "o": [6]}, {"n": "Yellow Lilac", "o": [0, 3, 6]}, {"n": "Yellow Lily", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Yellow Magnolia", "o": [3, 6]}, {"n": "Yellow Morning Dew Lily", "o": [4]}, {"n": "Yellow New Dawn Rose", "o": [2, 6]}, {"n": "Yellow-Orange Iceland Poppy", "o": [6, 8]}, {"n": "Yellow Osmanthus", "o": [6, 8]}, {"n": "Yellow Petunia", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 24, 25, 28]}, {"n": "Yellow-Pink Bearded Iris", "o": [5, 6]}, {"n": "Yellow Rhododendron", "o": [0, 1, 6]}, {"n": "Yellow Rose", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Yellow Spoon Chrysanthemum", "o": [0, 1, 3, 4, 5, 6, 8, 10, 13, 16, 17, 28]}, {"n": "Yellow Tulip", "o": [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 25, 27, 28]}, {"n": "Yesterday-Today-Tomorrow", "o": [2, 5, 6, 10, 11, 12]}, {"n": "Zantedeschiaaethiopica", "o": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 22, 28]}]};
+const SK = 'rtcf_v3', ME_KEY = 'rtcf_me';
+const SUPA_URL = 'https://qbuxhzvnbnjuibbusomn.supabase.co';
+const SUPA_KEY = 'sb_publishable_0QYFdSbpvQQPBmlINtn2fw_Qeo4kDR4';
+let lastUpdAt = null;
+let D, myId=null, curTab='profil', curFId=null, curPId=null;
+let fleursF='all', moiF='all', moiQ='';
+
+// ── Supabase ──────────────────────────────────────────────────────────────────
+function setSyncDot(status){
+  const el=document.getElementById('sync-dot'); if(!el) return;
+  const colors={loading:'#F59E0B',saving:'#F59E0B',ok:'#10B981',error:'#EF4444',offline:'#9CA3AF'};
+  const labels={loading:'Chargement…',saving:'Synchronisation…',ok:'Synchronisé ✓',error:'Erreur de synchronisation',offline:'Mode hors ligne'};
+  el.style.background=colors[status]||'#9CA3AF';
+  el.title=labels[status]||'';
+}
+async function supaFetch(){
+  const r=await fetch(`${SUPA_URL}/rest/v1/rtcf_data?id=eq.1`,
+    {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+  const rows=await r.json();
+  return rows&&rows[0]?rows[0]:null;
+}
+async function supaSave(data){
+  await fetch(`${SUPA_URL}/rest/v1/rtcf_data`,{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,
+      'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+    body:JSON.stringify({id:1,payload:data,updated_at:new Date().toISOString()})
+  });
+}
+async function checkSync(){
+  try{
+    const r=await fetch(`${SUPA_URL}/rest/v1/rtcf_data?id=eq.1&select=updated_at`,
+      {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+    const rows=await r.json();
+    if(rows&&rows[0]&&rows[0].updated_at!==lastUpdAt){
+      const row=await supaFetch();
+      if(row&&row.payload){
+        D=row.payload; lastUpdAt=row.updated_at;
+        localStorage.setItem(SK,JSON.stringify(D));
+        refreshAll();
+        showToast('🔄 Données mises à jour');
+      }
+    }
+  }catch(e){}
+}
+
+// ── Data ─────────────────────────────────────────────────────────────────────
+async function initData(){
+  setSyncDot('loading');
+  try{
+    const row=await supaFetch();
+    if(row&&row.payload){
+      D=row.payload; lastUpdAt=row.updated_at;
+      localStorage.setItem(SK,JSON.stringify(D));
+      setSyncDot('ok');
+    } else {
+      // Première utilisation : on pousse les données initiales vers Supabase
+      const local=localStorage.getItem(SK);
+      D=local?JSON.parse(local):fromInit();
+      await supaSave(D);
+      const row2=await supaFetch();
+      if(row2) lastUpdAt=row2.updated_at;
+      setSyncDot('ok');
+    }
+  } catch(e){
+    // Fallback hors ligne
+    const local=localStorage.getItem(SK);
+    D=local?JSON.parse(local):fromInit();
+    setSyncDot('offline');
+  }
+  myId=localStorage.getItem(ME_KEY);
+  if(myId&&!D.players.find(p=>p.id===myId)) myId=null;
+}
+function fromInit(){
+  return{version:3,
+    players:INITIAL.players.map((nm,i)=>({id:'p'+i,name:nm,short:INITIAL.shorts[i]})),
+    flowers:INITIAL.flowers.map((f,i)=>({id:'f'+i,name:f.n,owned:f.o.map(pi=>'p'+pi)}))};
+}
+function save(){
+  localStorage.setItem(SK,JSON.stringify(D));
+  setSyncDot('saving');
+  supaSave(D)
+    .then(async()=>{
+      // Récupère le vrai updated_at pour éviter de déclencher checkSync sur notre propre save
+      const r=await fetch(`${SUPA_URL}/rest/v1/rtcf_data?id=eq.1&select=updated_at`,
+        {headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+      const rows=await r.json();
+      if(rows&&rows[0]) lastUpdAt=rows[0].updated_at;
+      setSyncDot('ok');
+    })
+    .catch(()=>setSyncDot('error'));
+}
+function setMe(id){
+  myId=id; localStorage.setItem(ME_KEY,id);
+  updateFab(); renderProfil();
+}
+function clearMe(){
+  myId=null; localStorage.removeItem(ME_KEY);
+  updateFab(); renderProfil();
+}
+function updateFab(){
+  const fab=document.getElementById('fab');
+  const lbl=document.getElementById('fab-lbl');
+  if(curTab==='fleurs'){fab.classList.remove('hidden');lbl.textContent='Ajouter une fleur';}
+  else if(curTab==='equipe'){fab.classList.remove('hidden');lbl.textContent='Ajouter une joueuse';}
+  else fab.classList.add('hidden');
+}
+
+// ── CRUD ─────────────────────────────────────────────────────────────────────
+function addPlayer(nm){
+  nm=nm.trim(); if(!nm) return;
+  const p=nm.includes('/')?nm.split('/').pop().trim():nm;
+  D.players.push({id:'p_'+Date.now(),name:nm,short:p.split(' ')[0]});
+  save(); refreshAll();
+}
+function removePlayer(id){
+  D.players=D.players.filter(p=>p.id!==id);
+  D.flowers.forEach(f=>{f.owned=f.owned.filter(pid=>pid!==id);});
+  if(myId===id){myId=null;localStorage.removeItem(ME_KEY);}
+  save(); refreshAll();
+}
+function addFlower(nm){
+  nm=nm.trim(); if(!nm) return;
+  D.flowers.push({id:'f_'+Date.now(),name:nm,owned:[]});
+  D.flowers.sort((a,b)=>a.name.localeCompare(b.name,'fr',{sensitivity:'base'}));
+  save(); refreshAll();
+}
+function removeFlower(id){
+  D.flowers=D.flowers.filter(f=>f.id!==id);
+  save(); refreshAll();
+}
+function toggleOwn(fid,pid){
+  const f=D.flowers.find(x=>x.id===fid); if(!f) return;
+  const i=f.owned.indexOf(pid);
+  if(i>=0) f.owned.splice(i,1); else f.owned.push(pid);
+  save();
+}
+function resetData(){
+  confirm2('Réinitialiser les données ?',
+    'Toutes les modifications seront perdues et remplacées par les données initiales.',
+    ()=>{D=fromInit();save();refreshAll();closeCf();showToast('Données réinitialisées');});
+}
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function pOwned(pid){return D.flowers.filter(f=>f.owned.includes(pid)).length;}
+function pPct(pid){return D.flowers.length?pOwned(pid)/D.flowers.length*100:0;}
+function fPct(f){return D.players.length?f.owned.length/D.players.length*100:0;}
+function bcls(f){const c=f.owned.length;return c===0?'b-0':(c===D.players.length?'b-gr':(c<=5?'b-pk':'b-am'));}
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg){
+  let t=document.getElementById('_toast');
+  if(!t){t=document.createElement('div');t.id='_toast';t.className='toast';document.body.appendChild(t);}
+  t.textContent=msg; t.classList.remove('show');
+  clearTimeout(t._t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  t._t=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── SVG DONUT CHART ──────────────────────────────────────────────────────────
+function makePie(segs){
+  const total=segs.reduce((s,d)=>s+d.count,0);
+  if(!total) return '';
+  const R=62,IR=40,CX=80,CY=80;
+  let angle=-Math.PI/2;
+  const arcs=segs.filter(s=>s.count>0).map(seg=>{
+    const sl=seg.count/total*2*Math.PI;
+    const a1=angle,a2=angle+sl; angle=a2;
+    const x1o=CX+R*Math.cos(a1),y1o=CY+R*Math.sin(a1);
+    const x2o=CX+R*Math.cos(a2),y2o=CY+R*Math.sin(a2);
+    const x1i=CX+IR*Math.cos(a2),y1i=CY+IR*Math.sin(a2);
+    const x2i=CX+IR*Math.cos(a1),y2i=CY+IR*Math.sin(a1);
+    const lg=sl>Math.PI?1:0;
+    return `<path d="M${x1o.toFixed(2)},${y1o.toFixed(2)} A${R},${R} 0 ${lg},1 ${x2o.toFixed(2)},${y2o.toFixed(2)} L${x1i.toFixed(2)},${y1i.toFixed(2)} A${IR},${IR} 0 ${lg},0 ${x2i.toFixed(2)},${y2i.toFixed(2)} Z" fill="${seg.color}"/>`;
+  });
+  const nF=D.flowers.length;
+  return `<svg viewBox="0 0 160 160" width="130" height="130" style="flex-shrink:0">
+    ${arcs.join('')}
+    <text x="${CX}" y="${CY-5}" text-anchor="middle" dominant-baseline="middle"
+      font-size="18" font-weight="700" fill="#111827" font-family="system-ui,sans-serif">${nF}</text>
+    <text x="${CX}" y="${CY+12}" text-anchor="middle"
+      font-size="9" fill="#9CA3AF" font-family="system-ui,sans-serif">fleurs</text>
+  </svg>`;
+}
+
+function renderChart(){
+  const nF=D.flowers.length;
+  const segs=[
+    {label:'Absentes',    count:D.flowers.filter(f=>f.owned.length===0).length,          color:'#D1D5DB'},
+    {label:'Rares (1–5)', count:D.flowers.filter(f=>f.owned.length>=1&&f.owned.length<=5).length, color:'#F43F5E'},
+    {label:'Communes (6–15)',count:D.flowers.filter(f=>f.owned.length>=6&&f.owned.length<=15).length,color:'#F59E0B'},
+    {label:'Populaires (16+)',count:D.flowers.filter(f=>f.owned.length>=16).length,      color:'#10B981'},
+  ];
+  const el=document.getElementById('fleurs-chart'); if(!el) return;
+  el.innerHTML=`
+    <div style="font-size:.68rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Répartition par rareté</div>
+    <div class="chart-inner">
+      ${makePie(segs)}
+      <div style="flex:1;min-width:0">
+        ${segs.map(s=>`
+          <div class="legend-row">
+            <div class="legend-dot" style="background:${s.color}"></div>
+            <span class="legend-lbl">${s.label}</span>
+            <span class="legend-n">${s.count}</span>
+            <span class="legend-p">${nF?Math.round(s.count/nF*100):0}%</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ── PROFIL TAB ───────────────────────────────────────────────────────────────
+function renderProfil(){
+  const el=document.getElementById('v-profil');
+  if(!myId||!D.players.find(p=>p.id===myId)){renderOnboarding(el);return;}
+  const me=D.players.find(p=>p.id===myId);
+  const nF=D.flowers.length,nP=D.players.length;
+  const owned=D.flowers.filter(f=>f.owned.includes(myId));
+  const missing=D.flowers.filter(f=>!f.owned.includes(myId));
+  const pct=nF?owned.length/nF*100:0;
+  let shown=moiF==='owned'?owned:moiF==='missing'?missing:D.flowers;
+  if(moiQ){const q=norm(moiQ);shown=shown.filter(f=>norm(f.name).includes(q));}
+  const initials=me.short.slice(0,2).toUpperCase();
+
+  el.innerHTML=`
+    <div class="sticky-top">
+      <div class="profbar">
+        <div class="profavo">${initials}</div>
+        <div class="profinfo">
+          <div class="profname">${esc(me.short)}</div>
+          <div class="proffull">${esc(me.name)}</div>
+        </div>
+        <button class="chg-btn" onclick="clearMe()">Changer</button>
+      </div>
+      <div class="progcard">
+        <div class="prog-nums">
+          <span class="prog-big">${owned.length}</span>
+          <span class="prog-total">/ ${nF} fleurs</span>
+          <span class="prog-pct">${pct.toFixed(1)}%</span>
+        </div>
+        <div class="prog-bar-lg"><div class="prog-fill-lg" style="width:${pct.toFixed(1)}%"></div></div>
+        <div class="prog-sub">${missing.length} fleur${missing.length!==1?'s':''} manquante${missing.length!==1?'s':''}</div>
+      </div>
+      <div class="fchips">
+        <button class="fchip${moiF==='all'?' active':''}" onclick="setMoiF('all')">Toutes</button>
+        <button class="fchip${moiF==='owned'?' active':''}" onclick="setMoiF('owned')">Ma collection (${owned.length})</button>
+        <button class="fchip${moiF==='missing'?' active':''}" onclick="setMoiF('missing')">Manquantes (${missing.length})</button>
+      </div>
+      <div class="sbox" style="margin-top:8px"><span class="sico">🔍</span>
+        <input class="sinput" id="moi-q" type="search" placeholder="Rechercher…" value="${esc(moiQ)}" oninput="moiQ=this.value;renderProfil()"></div>
+    </div>
+    <div class="scroll-area">
+    ${shown.length?shown.map(f=>{
+      const has=f.owned.includes(myId);
+      return `<div class="litem" onclick="openFlower('${f.id}')">
+        <div class="litem-ico" style="${has?'background:#D1FAE5;color:#047857':''}">${has?'✓':'🌸'}</div>
+        <div class="litem-body"><div class="litem-name">${esc(f.name)}</div></div>
+        <div class="litem-right">
+          <span class="badge ${bcls(f)}">${f.owned.length}/${nP}</span>
+          <button class="qtoggle ${has?'on':'off'}" data-fid="${f.id}" data-pid="${myId}"
+            onclick="event.stopPropagation();doQuickToggle(this)">${has?'✓ J\'ai':'+ Ajouter'}</button>
+        </div>
+      </div>`;
+    }).join(''):'<div class="empty">Aucune fleur trouvée</div>'}
+    </div>`;
+}
+
+function renderOnboarding(el){
+  el.innerHTML=`
+    <div class="scroll-area">
+      <div style="text-align:center;padding:32px 0 24px">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;font-size:1.4rem;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">🌸</div>
+        <div style="font-size:1rem;font-weight:700;margin-bottom:6px;color:#111827">Choisir mon profil</div>
+        <div style="font-size:.8rem;color:#9CA3AF;max-width:240px;margin:0 auto 24px;line-height:1.5">
+          Sélectionne ton compte pour suivre ta collection personnelle
+        </div>
+      </div>
+      <div class="ppgrid">
+        ${D.players.map(p=>`
+          <button class="ppbtn" onclick="setMe('${p.id}')">
+            <div class="ppbtn-ico">👤</div>
+            <div class="ppbtn-name">${esc(p.short)}</div>
+            <div class="ppbtn-full">${esc(p.name)}</div>
+          </button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function setMoiF(f){moiF=f;renderProfil();}
+function doQuickToggle(btn){
+  const fid=btn.dataset.fid,pid=btn.dataset.pid;
+  const f=D.flowers.find(x=>x.id===fid);if(!f) return;
+  const had=f.owned.includes(pid);
+  toggleOwn(fid,pid);
+  showToast(had?'Retirée de ta collection':'✓ '+f.name+' ajoutée !');
+  renderProfil();refreshAll();
+}
+
+// ── PICKER ────────────────────────────────────────────────────────────────────
+function openPicker(){
+  document.getElementById('sh-body').innerHTML=`
+    <div class="sh-title">🌸 Nouvelle fleur débloquée</div>
+    <div class="sbox" style="margin-bottom:10px"><span class="sico">🔍</span>
+      <input class="picker-inp" id="picker-q" type="text" placeholder="Rechercher parmi les fleurs manquantes…" oninput="renderPicker()"></div>
+    <div class="picker-list" id="picker-list"></div>`;
+  document.getElementById('shbg').classList.add('open');
+  document.getElementById('sheet').classList.add('open');
+  renderPicker();
+  setTimeout(()=>{const el=document.getElementById('picker-q');if(el)el.focus();},340);
+}
+function renderPicker(){
+  const raw=(document.getElementById('picker-q')||{}).value||'';
+  const q=norm(raw);
+  const notOwned=D.flowers.filter(f=>!f.owned.includes(myId));
+  const filtered=q?notOwned.filter(f=>norm(f.name).includes(q)):notOwned;
+  const exactMatch=D.flowers.some(f=>norm(f.name)===norm(raw.trim()));
+  const nP=D.players.length;
+  const el=document.getElementById('picker-list');if(!el) return;
+  let html='';
+  if(filtered.length){
+    html=filtered.slice(0,60).map(f=>`
+      <div class="picker-item">
+        <span class="picker-name">${esc(f.name)}</span>
+        <span class="badge b-0" style="flex-shrink:0;margin-right:4px">${f.owned.length}/${nP}</span>
+        <button class="picker-add" data-fid="${f.id}" onclick="pickerAdd(this)">+ J'ai !</button>
+      </div>`).join('');
+    if(filtered.length>60) html+=`<div class="picker-empty">+${filtered.length-60} autres — affine la recherche</div>`;
+  } else if(q){
+    html='<div class="picker-empty">Aucune fleur manquante correspondante</div>';
+  } else {
+    html='<div class="picker-empty">🎉 Tu as déjà toutes les fleurs répertoriées !</div>';
+  }
+  if(raw.trim()&&!exactMatch){
+    html+=`<div class="picker-new" onclick="pickerCreate()">
+      ✨ <strong>Créer</strong> « ${esc(raw.trim())} » et l'ajouter à ma collection</div>`;
+  }
+  el.innerHTML=html;
+}
+function pickerAdd(btn){
+  const fid=btn.dataset.fid,f=D.flowers.find(x=>x.id===fid);
+  if(!f||!myId) return;
+  if(!f.owned.includes(myId)){f.owned.push(myId);save();}
+  closeSheet(); showToast('✓ '+f.name+' ajoutée !');
+  renderProfil();refreshAll();
+}
+function pickerCreate(){
+  const raw=(document.getElementById('picker-q')||{}).value||'';
+  const name=raw.trim();if(!name||!myId) return;
+  const id='f_'+Date.now();
+  D.flowers.push({id,name,owned:[myId]});
+  D.flowers.sort((a,b)=>a.name.localeCompare(b.name,'fr',{sensitivity:'base'}));
+  save();closeSheet();showToast('✨ "'+name+'" créée et ajoutée !');
+  refreshAll();
+}
+
+// ── FLEURS TAB ────────────────────────────────────────────────────────────────
+function buildFleursChips(){
+  const chips=[{k:'all',l:'Toutes'},{k:'0',l:'Absentes'},{k:'rare',l:'Rares'},{k:'med',l:'Communes'},{k:'pop',l:'Populaires'}];
+  document.getElementById('fleurs-chips').innerHTML=chips.map(c=>
+    `<button class="fchip${fleursF===c.k?' active':''}" onclick="setFleursF('${c.k}')">${c.l}</button>`).join('');
+}
+function setFleursF(k){fleursF=k;buildFleursChips();renderFleurs();}
+function renderFleurs(){
+  const q=norm(document.getElementById('fleurs-q').value);
+  const nP=D.players.length;
+  const fl=D.flowers.filter(f=>{
+    if(q&&!norm(f.name).includes(q)) return false;
+    const c=f.owned.length;
+    if(fleursF==='0'&&c!==0) return false;
+    if(fleursF==='rare'&&(c<1||c>5)) return false;
+    if(fleursF==='med'&&(c<6||c>15)) return false;
+    if(fleursF==='pop'&&c<16) return false;
+    return true;
+  });
+  renderChart();
+  const el=document.getElementById('fleurs-list');
+  if(!fl.length){el.innerHTML='<div class="empty">Aucune fleur trouvée</div>';return;}
+  el.innerHTML=fl.map(f=>{
+    const p=fPct(f),isMine=myId&&f.owned.includes(myId);
+    return `<div class="litem" onclick="openFlower('${f.id}')">
+      <div class="litem-ico" style="${isMine?'background:#D1FAE5;color:#047857':''}">🌸</div>
+      <div class="litem-body">
+        <div class="litem-name">${esc(f.name)}</div>
+        <div class="bar"><div class="bar-fill bpk" style="width:${p.toFixed(1)}%"></div></div>
+      </div>
+      <div class="litem-right">
+        <span class="badge ${bcls(f)}">${f.owned.length}/${nP}</span>
+        <span class="chevron">›</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ÉQUIPE TAB ────────────────────────────────────────────────────────────────
+function renderEquipe(){
+  const q=norm(document.getElementById('eq-q').value);
+  const nF=D.flowers.length;
+  const pl=[...D.players]
+    .filter(p=>!q||norm(p.name).includes(q)||norm(p.short).includes(q))
+    .map(p=>({...p,c:pOwned(p.id),pct:pPct(p.id)}))
+    .sort((a,b)=>b.c-a.c);
+  const el=document.getElementById('eq-list');
+  if(!pl.length){el.innerHTML='<div class="empty">Aucune joueuse trouvée</div>';return;}
+  el.innerHTML=pl.map((p,i)=>`
+    <div class="litem" onclick="openPlayer('${p.id}')">
+      <div class="litem-ico" style="${p.id===myId?'background:#FCE4EC;color:#880E4F':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👤'}</div>
+      <div class="litem-body">
+        <div class="litem-name">${esc(p.short)}${p.id===myId?' <span style="font-size:.68rem;color:#C2185B;font-weight:600">(moi)</span>':''}</div>
+        <div class="litem-sub">${esc(p.name)}</div>
+        <div class="bar"><div class="bar-fill bgr" style="width:${p.pct.toFixed(1)}%"></div></div>
+      </div>
+      <div class="litem-right">
+        <span class="badge b-pk">${p.c}/${nF}</span>
+        <span class="chevron">›</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── GÉRER TAB ─────────────────────────────────────────────────────────────────
+function renderManage(){
+  const qp=norm(document.getElementById('mgp-q').value);
+  const qf=norm(document.getElementById('mgf-q').value);
+  const pls=D.players.filter(p=>!qp||norm(p.name).includes(qp)||norm(p.short).includes(qp));
+  const fls=D.flowers.filter(f=>!qf||norm(f.name).includes(qf));
+  document.getElementById('mg-players').innerHTML=pls.map(p=>
+    `<div class="mgitem"><span class="mgname">${esc(p.name)}</span>
+      <button class="del" data-id="${p.id}" onclick="askDelPlayer(this)">Supprimer</button>
+    </div>`).join('')||'<div class="empty" style="padding:8px 0">Aucune joueuse</div>';
+  document.getElementById('mg-flowers').innerHTML=fls.map(f=>
+    `<div class="mgitem"><span class="mgname">${esc(f.name)}</span>
+      <button class="del" data-id="${f.id}" onclick="askDelFlower(this)">Supprimer</button>
+    </div>`).join('')||'<div class="empty" style="padding:8px 0">Aucune fleur</div>';
+}
+
+function refreshAll(){renderProfil();renderFleurs();renderEquipe();renderManage();}
+
+// ── DETAIL VIEWS ──────────────────────────────────────────────────────────────
+function openFlower(id){
+  curFId=id;renderFlower(id);
+  document.getElementById('dv-flower').classList.add('open');
+}
+function renderFlower(id){
+  const f=D.flowers.find(x=>x.id===id);if(!f) return;
+  const nP=D.players.length,c=f.owned.length,p=fPct(f);
+  const isMine=myId&&f.owned.includes(myId);
+  document.getElementById('fd-title').textContent=f.name;
+  document.getElementById('fd-body').innerHTML=`
+    <div class="card" style="text-align:center;margin-bottom:14px">
+      <div style="font-size:1.8rem;margin-bottom:8px">🌸</div>
+      <div style="font-weight:700;font-size:.95rem;margin-bottom:3px">${esc(f.name)}</div>
+      <div style="font-size:.75rem;color:#9CA3AF">${c} joueuse${c!==1?'s':''} sur ${nP} — ${p.toFixed(1)}%</div>
+      <div class="bar" style="margin-top:10px"><div class="bar-fill bpk" style="width:${p.toFixed(1)}%"></div></div>
+      ${myId?`<button class="qtoggle ${isMine?'on':'off'}" style="margin-top:14px;padding:8px 20px;font-size:.82rem"
+        data-fid="${id}" data-pid="${myId}" onclick="doQuickToggle(this)">
+        ${isMine?'✓ J\'ai cette fleur':'+ Je viens de l\'avoir !'}</button>`:''}
+    </div>
+    <div class="slbl">Possession — tap pour modifier</div>
+    <div class="chip-grid">${D.players.map(pl=>{
+      const has=f.owned.includes(pl.id);
+      return `<button class="ochip${has?' on':''}" data-fid="${f.id}" data-pid="${pl.id}" onclick="doChipToggle(this)">
+        ${has?'✓ ':''}${esc(pl.short)}</button>`;
+    }).join('')}</div>`;
+}
+function openPlayer(id){
+  curPId=id;renderPlayerDetail(id);
+  document.getElementById('dv-player').classList.add('open');
+}
+function renderPlayerDetail(id){
+  const p=D.players.find(x=>x.id===id);if(!p) return;
+  const nF=D.flowers.length,c=pOwned(id),pct=pPct(id);
+  const initials=p.short.slice(0,2).toUpperCase();
+  document.getElementById('pd-title').textContent=p.short+(id===myId?' (moi)':'');
+  document.getElementById('pd-body').innerHTML=`
+    <div class="card" style="text-align:center;margin-bottom:14px">
+      <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;font-size:1.1rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">${initials}</div>
+      <div style="font-weight:700;font-size:.95rem">${esc(p.short)}</div>
+      <div style="font-size:.75rem;color:#9CA3AF;margin-top:2px">${esc(p.name)}</div>
+      <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:12px">
+        <span style="font-size:1.6rem;font-weight:800">${c}</span>
+        <span style="font-size:.8rem;color:#9CA3AF">/ ${nF} fleurs</span>
+        <span style="font-size:.85rem;font-weight:600;color:#C2185B">${pct.toFixed(1)}%</span>
+      </div>
+      <div class="bar" style="margin-top:8px"><div class="bar-fill bgr" style="width:${pct.toFixed(1)}%"></div></div>
+    </div>
+    <div class="slbl">Collection — tap pour modifier</div>
+    <div class="chip-grid">${D.flowers.map(f=>{
+      const has=f.owned.includes(id);
+      return `<button class="ochip${has?' on':''}" data-fid="${f.id}" data-pid="${id}" onclick="doChipToggle(this)">
+        ${has?'✓ ':''}${esc(f.name)}</button>`;
+    }).join('')}</div>`;
+}
+function doChipToggle(btn){
+  const fid=btn.dataset.fid,pid=btn.dataset.pid;
+  toggleOwn(fid,pid);
+  if(curFId===fid) renderFlower(fid);
+  else if(curPId===pid) renderPlayerDetail(pid);
+  renderProfil();refreshAll();
+}
+function closeDetail(t){document.getElementById('dv-'+t).classList.remove('open');}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function goTab(t){
+  curTab=t;
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='v-'+t));
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  updateFab();
+}
+function onFab(){
+  if(curTab==='fleurs') openSheet('flower');
+  else if(curTab==='equipe') openSheet('player');
+}
+
+// ── SHEET ─────────────────────────────────────────────────────────────────────
+let shMode=null;
+function openSheet(mode){
+  shMode=mode;
+  const isF=mode==='flower';
+  document.getElementById('sh-body').innerHTML=`
+    <div class="sh-title">${isF?'Ajouter une fleur':'Ajouter une joueuse'}</div>
+    <input class="sh-input" id="sh-inp" type="text" placeholder="${isF?'Nom de la fleur…':'Pseudo / Prénom  ex: TheaLrd / Théa'}"
+      onkeydown="if(event.key==='Enter')submitSheet()">
+    <div class="sh-btns">
+      <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn btn-pk" onclick="submitSheet()">Ajouter</button>
+    </div>`;
+  document.getElementById('shbg').classList.add('open');
+  document.getElementById('sheet').classList.add('open');
+  setTimeout(()=>{const el=document.getElementById('sh-inp');if(el)el.focus();},340);
+}
+function closeSheet(){
+  document.getElementById('shbg').classList.remove('open');
+  document.getElementById('sheet').classList.remove('open');
+}
+function submitSheet(){
+  const v=document.getElementById('sh-inp')?.value;
+  if(shMode==='flower') addFlower(v); else addPlayer(v);
+  closeSheet();
+}
+
+// ── CONFIRM ───────────────────────────────────────────────────────────────────
+let cfCb=null;
+function confirm2(t,m,cb){
+  document.getElementById('cf-title').textContent=t;
+  document.getElementById('cf-msg').textContent=m;
+  cfCb=cb;document.getElementById('cfbg').classList.add('open');
+}
+function closeCf(){document.getElementById('cfbg').classList.remove('open');cfCb=null;}
+document.getElementById('cf-ok').onclick=()=>{if(cfCb)cfCb();};
+function askDel(type){
+  if(type==='flower'&&curFId){const f=D.flowers.find(x=>x.id===curFId);if(f)askDelFlowerById(curFId,f.name);}
+  else if(type==='player'&&curPId){const p=D.players.find(x=>x.id===curPId);if(p)askDelPlayerById(curPId,p.short);}
+}
+function askDelFlower(btn){const id=btn.dataset.id,f=D.flowers.find(x=>x.id===id);if(f)askDelFlowerById(id,f.name);}
+function askDelPlayer(btn){const id=btn.dataset.id,p=D.players.find(x=>x.id===id);if(p)askDelPlayerById(id,p.short);}
+function askDelFlowerById(id,name){
+  confirm2('Supprimer cette fleur ?',
+    '"'+name+'" sera supprimée définitivement.',
+    ()=>{removeFlower(id);closeDetail('flower');closeCf();showToast('Fleur supprimée');});
+}
+function askDelPlayerById(id,name){
+  confirm2('Supprimer cette joueuse ?',
+    '"'+name+'" et toute sa collection seront supprimées.',
+    ()=>{removePlayer(id);closeDetail('player');closeCf();showToast('Joueuse supprimée');});
+}
+
+// ── IMPORT ────────────────────────────────────────────────────────────────────
+function doImport(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0];if(!file) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!data.players||!data.flowers) throw new Error('Format invalide');
+        D=data;D.version=3;save();refreshAll();
+        showToast('✓ Données importées avec succès');
+      }catch(err){alert('Erreur : '+err.message);}
+    };
+    r.readAsText(file);
+  };
+  inp.click();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async()=>{
+  try{
+    await initData();
+  }catch(e){
+    // Sécurité : si tout plante, on charge quand même depuis le cache local
+    const local=localStorage.getItem(SK);
+    D=local?JSON.parse(local):fromInit();
+    setSyncDot('offline');
+  }finally{
+    buildFleursChips();
+    refreshAll();
+    updateFab();
+    document.getElementById('loading').style.display='none';
+  }
+  setInterval(checkSync,30000);
+})();
+
+</script>
+</body>
+</html>
