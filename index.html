@@ -286,6 +286,9 @@ const SK = 'rtcf_v3', ME_KEY = 'rtcf_me';
 const SUPA_URL = 'https://qbuxhzvnbnjuibbusomn.supabase.co';
 const SUPA_KEY = 'sb_publishable_0QYFdSbpvQQPBmlINtn2fw_Qeo4kDR4';
 let lastUpdAt = null;
+const ADMINS = new Set(['p1']); // Rose Bouquet / Charline
+const ADMIN_PIN = '0909';
+let pinUnlocked = false;
 let D, myId=null, curTab='profil', curFId=null, curPId=null;
 let fleursF='all', moiF='all', moiQ='';
 
@@ -374,13 +377,20 @@ function save(){
     })
     .catch(()=>setSyncDot('error'));
 }
+function isAdmin(){ return myId&&ADMINS.has(myId); }
+function updateNav(){
+  const btn=document.querySelector('.nbtn[data-tab="gerer"]');
+  if(btn) btn.style.display=isAdmin()?'':'none';
+}
 function setMe(id){
-  myId=id; localStorage.setItem(ME_KEY,id);
-  updateFab(); renderProfil();
+  myId=id; pinUnlocked=false;
+  localStorage.setItem(ME_KEY,id);
+  updateFab(); updateNav(); renderProfil();
 }
 function clearMe(){
-  myId=null; localStorage.removeItem(ME_KEY);
-  updateFab(); renderProfil();
+  myId=null; pinUnlocked=false;
+  localStorage.removeItem(ME_KEY);
+  updateFab(); updateNav(); renderProfil();
 }
 function updateFab(){
   const fab=document.getElementById('fab');
@@ -784,10 +794,40 @@ function closeDetail(t){document.getElementById('dv-'+t).classList.remove('open'
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
 function goTab(t){
+  if(t==='gerer'){
+    if(!isAdmin()) return;
+    if(!pinUnlocked){ openPinSheet(); return; }
+  }
   curTab=t;
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='v-'+t));
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   updateFab();
+}
+function openPinSheet(){
+  document.getElementById('sh-body').innerHTML=`
+    <div class="sh-title">🔒 Accès administrateur</div>
+    <p style="font-size:.82rem;color:#9CA3AF;margin-bottom:14px">Entrez le code PIN pour accéder à la gestion</p>
+    <input class="sh-input" id="pin-inp" type="password" inputmode="numeric" maxlength="4"
+      placeholder="Code PIN" onkeydown="if(event.key==='Enter')submitPin()">
+    <div id="pin-err" style="color:#B91C1C;font-size:.78rem;margin-bottom:10px;display:none">Code incorrect ❌</div>
+    <div class="sh-btns">
+      <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
+      <button class="btn btn-pk" onclick="submitPin()">Confirmer</button>
+    </div>`;
+  document.getElementById('shbg').classList.add('open');
+  document.getElementById('sheet').classList.add('open');
+  setTimeout(()=>{const el=document.getElementById('pin-inp');if(el)el.focus();},340);
+}
+function submitPin(){
+  const val=document.getElementById('pin-inp')?.value;
+  if(val===ADMIN_PIN){
+    pinUnlocked=true; closeSheet(); goTab('gerer');
+  } else {
+    const inp=document.getElementById('pin-inp');
+    const err=document.getElementById('pin-err');
+    if(inp){inp.value='';inp.style.borderColor='#B91C1C';}
+    if(err) err.style.display='';
+  }
 }
 function onFab(){
   if(curTab==='fleurs') openSheet('flower');
@@ -878,6 +918,7 @@ function doImport(){
     buildFleursChips();
     refreshAll();
     updateFab();
+    updateNav();
     document.getElementById('loading').style.display='none';
   }
   setInterval(checkSync,30000);
