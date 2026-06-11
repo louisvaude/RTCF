@@ -161,11 +161,11 @@ main{flex:1;overflow:hidden;position:relative;min-height:0}
 .cfbtns{display:flex;gap:8px}
 .toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(50px);background:rgba(17,24,39,.92);color:#fff;border-radius:8px;padding:9px 18px;font-size:.8rem;font-weight:500;z-index:200;transition:transform .25s,opacity .25s;opacity:0;white-space:nowrap;pointer-events:none;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
-.b-N{background:#F1F5F9;color:#6B7280}
-.b-R{background:#DBEAFE;color:#1D4ED8}
-.b-SR{background:#FEF3C7;color:#B45309}
-.b-SSR{background:#FCE4EC;color:#880E4F}
-.b-UR{background:#EDE9FE;color:#5B21B6}
+.b-N{background:#D1FAE5;color:#047857}
+.b-R{background:#BAE6FD;color:#0369A1}
+.b-SR{background:#EDE9FE;color:#5B21B6}
+.b-SSR{background:#FEF9C3;color:#A16207}
+.b-UR{background:#FEE2E2;color:#B91C1C}
 .pts{font-size:.67rem;font-weight:700;color:#5B21B6;background:#EDE9FE;border-radius:4px;padding:1px 5px;flex-shrink:0}
 .edit-lbl{font-size:.72rem;color:#C2185B;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;flex-shrink:0}
 .rsel{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
@@ -689,11 +689,11 @@ function renderFleurs(){
     return `<div class="litem" onclick="openFlower('${f.id}')">
       <div class="litem-ico" style="${isMine?'background:#D1FAE5;color:#047857':''}">🌸</div>
       <div class="litem-body">
-        <div class="litem-name">${esc(f.name)}</div>
-        ${(f.rarity||f.points!=null)?`<div style="display:flex;align-items:center;gap:5px;margin-top:2px">
-          ${f.rarity?`<span class="badge ${bcls(f)}" style="font-size:.65rem;padding:1px 5px">${f.rarity}</span>`:''}
-          ${f.points!=null?`<span class="pts">${f.points}pts</span>`:''}
-        </div>`:''}
+        <div style="display:flex;align-items:center;gap:6px;min-width:0">
+          <span style="font-size:.875rem;font-weight:600;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(f.name)}</span>
+          ${f.rarity?`<span class="badge ${bcls(f)}" style="font-size:.65rem;padding:1px 5px;flex-shrink:0">${f.rarity}</span>`:''}
+          ${f.points!=null?`<span class="pts" style="flex-shrink:0">${f.points}pts</span>`:''}
+        </div>
         <div class="bar" style="margin-top:4px"><div class="bar-fill bpk" style="width:${p.toFixed(1)}%"></div></div>
       </div>
       <div class="litem-right">
@@ -863,7 +863,7 @@ function onFab(){
 
 // ── SHEET ─────────────────────────────────────────────────────────────────────
 const RARITIES=['N','R','SR','SSR','UR'];
-const POINTS_VALS=[9,14,21,23,25,28];
+const POINTS_VALS=[9,14,21,23,25,28,30];
 let shMode=null,shRarity=null,shPoints=null;
 
 function rselHTML(selId,vals,cur){
