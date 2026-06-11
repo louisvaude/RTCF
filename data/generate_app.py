@@ -438,8 +438,7 @@ function clearMe(){
 function updateFab(){
   const fab=document.getElementById('fab');
   const lbl=document.getElementById('fab-lbl');
-  if(curTab==='profil'&&myId){fab.classList.remove('hidden');lbl.textContent='Nouvelle fleur !';}
-  else if(curTab==='fleurs'){fab.classList.remove('hidden');lbl.textContent='Ajouter au catalogue';}
+  if(curTab==='fleurs'){fab.classList.remove('hidden');lbl.textContent='Ajouter au catalogue';}
   else fab.classList.add('hidden');
 }
 
@@ -857,8 +856,7 @@ function submitPin(){
   }
 }
 function onFab(){
-  if(curTab==='profil') openPicker();
-  else if(curTab==='fleurs') openSheet('flower');
+  if(curTab==='fleurs') openSheet('flower');
 }
 
 // ── SHEET ─────────────────────────────────────────────────────────────────────
