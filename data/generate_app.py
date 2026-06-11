@@ -166,7 +166,8 @@ main{flex:1;overflow:hidden;position:relative;min-height:0}
 .b-SR{background:#EDE9FE;color:#5B21B6}
 .b-SSR{background:#FEF9C3;color:#A16207}
 .b-UR{background:#FEE2E2;color:#B91C1C}
-.pts{font-size:.67rem;font-weight:700;color:#5B21B6;background:#EDE9FE;border-radius:4px;padding:1px 5px;flex-shrink:0}
+.pts{font-size:.68rem;font-weight:700;color:#5B21B6;background:#EDE9FE;border-radius:4px;padding:2px 6px;flex-shrink:0;min-width:46px;text-align:right;display:inline-block}
+.badge-r{min-width:36px;text-align:center;display:inline-block}
 .edit-lbl{font-size:.72rem;color:#C2185B;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;flex-shrink:0}
 .rsel{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
 .rsel-btn{border:1px solid #E8ECF2;border-radius:5px;padding:5px 11px;font-size:.75rem;font-weight:600;cursor:pointer;background:#fff;color:#4B5563;transition:.12s}
@@ -555,8 +556,8 @@ function renderProfil(){
         <div class="litem-ico" style="${has?'background:#D1FAE5;color:#047857':''}">${has?'✓':'🌸'}</div>
         <div class="litem-body"><div class="litem-name">${esc(f.name)}</div></div>
         <div class="litem-right">
-          ${f.points!=null?`<span class="pts">${f.points}pts</span>`:''}
-          <span class="badge ${bcls(f)}">${rarityLabel(f.rarity)}</span>
+          ${f.points!=null?`<span class="pts">${f.points}pts</span>`:'<span class="pts" style="opacity:0;pointer-events:none">—pts</span>'}
+          ${f.rarity?`<span class="badge badge-r ${bcls(f)}">${f.rarity}</span>`:'<span class="badge badge-r b-0" style="opacity:0;pointer-events:none">—</span>'}
           <span class="chevron">›</span>
         </div>
       </div>`;
@@ -688,15 +689,13 @@ function renderFleurs(){
     return `<div class="litem" onclick="openFlower('${f.id}')">
       <div class="litem-ico" style="${isMine?'background:#D1FAE5;color:#047857':''}">🌸</div>
       <div class="litem-body">
-        <div style="display:flex;align-items:center;gap:6px;min-width:0">
-          <span style="font-size:.875rem;font-weight:600;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(f.name)}</span>
-          ${f.rarity?`<span class="badge ${bcls(f)}" style="font-size:.65rem;padding:1px 5px;flex-shrink:0">${f.rarity}</span>`:''}
-          ${f.points!=null?`<span class="pts" style="flex-shrink:0">${f.points}pts</span>`:''}
-        </div>
-        <div class="bar" style="margin-top:4px"><div class="bar-fill bpk" style="width:${p.toFixed(1)}%"></div></div>
+        <div class="litem-name">${esc(f.name)}</div>
+        <div class="bar"><div class="bar-fill bpk" style="width:${p.toFixed(1)}%"></div></div>
       </div>
       <div class="litem-right">
-        ${myId?`<button class="qtoggle ${isMine?'on':'off'}" onclick="event.stopPropagation();toggleMyFlower('${f.id}')">${isMine?'✓ J\'ai':'+ Ajouter'}</button>`:'<span class="chevron">›</span>'}
+        ${f.points!=null?`<span class="pts">${f.points}pts</span>`:'<span class="pts" style="opacity:0;pointer-events:none">—pts</span>'}
+        ${f.rarity?`<span class="badge badge-r ${bcls(f)}">${f.rarity}</span>`:'<span class="badge badge-r b-0" style="opacity:0;pointer-events:none">—</span>'}
+        ${myId?`<button class="qtoggle ${isMine?'on':'off'}" onclick="event.stopPropagation();toggleMyFlower('${f.id}')">${isMine?'✓ J\'ai':'+ Ajouter'}</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -810,8 +809,8 @@ function renderPlayerDetail(id){
         <div class="litem-ico" style="background:#D1FAE5;color:#047857">✓</div>
         <div class="litem-body"><div class="litem-name">${esc(f.name)}</div></div>
         <div class="litem-right">
-          ${f.points!=null?`<span class="pts">${f.points}pts</span>`:''}
-          <span class="badge ${bcls(f)}">${rarityLabel(f.rarity)}</span>
+          ${f.points!=null?`<span class="pts">${f.points}pts</span>`:'<span class="pts" style="opacity:0;pointer-events:none">—pts</span>'}
+          ${f.rarity?`<span class="badge badge-r ${bcls(f)}">${f.rarity}</span>`:'<span class="badge badge-r b-0" style="opacity:0;pointer-events:none">—</span>'}
           <span class="chevron">›</span>
         </div>
       </div>`).join('')||'<div class="empty">Aucune fleur pour l\'instant</div>'}`;
