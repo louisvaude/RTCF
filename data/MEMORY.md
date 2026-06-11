@@ -7,10 +7,10 @@
 
 ## Le projet
 
-**RTCF · Pétales** — application web mobile de suivi de collection de fleurs pour les joueuses du club RTCF (Cozy Florist).
+**Divine Sakura** (anciennement RTCF · Pétales) — application web mobile de suivi de collection de fleurs pour les joueuses du club RTCF (Cozy Florist).
 
 - Chaque joueuse a un profil et peut cocher les fleurs qu'elle possède
-- Vue équipe avec classement, vue détail par fleur/joueuse, graphique donut de rareté
+- Vue équipe avec classement, vue détail par fleur/joueuse
 - Données partagées en temps réel via Supabase (toutes les joueuses voient la même collection)
 - Synchronisation automatique toutes les 30 secondes
 
@@ -41,6 +41,15 @@ py data/generate_app.py
 - **Table principale** : `rtcf_data` — id=1, colonnes : `payload` (JSON), `updated_at`
 - **Table logs IT** : `rtcf_logs` — colonnes : `id`, `ts`, `event`, `player_id`, `player_name`, `ua`, `screen`, `lang`, `detail`
 
+**Reset de la séquence ID après suppression de logs :**
+```sql
+-- Vider + reset à 1 (recommandé)
+TRUNCATE TABLE rtcf_logs RESTART IDENTITY;
+
+-- Reset uniquement le compteur (sans supprimer)
+ALTER SEQUENCE rtcf_logs_id_seq RESTART WITH 1;
+```
+
 ---
 
 ## Utilisateurs & accès
@@ -53,6 +62,7 @@ py data/generate_app.py
 
 - 34 joueuses, ~362 fleurs au dernier build
 - Pseudo affiché = partie après `/` dans le nom (ex: `TheaLrd / Théa` → affiche `Théa`)
+- Nom en gras = partie AVANT `/` (ex: `Rose Bouquet`), label facultatif = partie APRÈS `/` (ex: `Charline`)
 
 ---
 
@@ -73,24 +83,43 @@ Logs invisibles dans l'app, écrits dans `rtcf_logs` Supabase, lisibles uniqueme
 
 ---
 
+## Système de sauvegarde automatique
+
+GitHub Actions — tourne entièrement sur GitHub, indépendant du poste local.
+
+- **Fichier** : `.github/workflows/backup.yml` (doit rester à la racine — contrainte GitHub)
+- **Sauvegardes stockées** : `data/backups/weekly/` et `data/backups/monthly/`
+- **Fréquence** : chaque dimanche à 7h00 UTC → `data/backups/weekly/YYYY-MM-DD.json`
+- **Consolidation mensuelle** : 1er dimanche du mois → copie en `data/backups/monthly/YYYY-MM.json` + supprime les anciens hebdos
+- **Déclenchement manuel** : GitHub → Actions → "Sauvegarde Divine Sakura" → Run workflow
+- **Suivi** : `github.com/Cozy-Florist/RTCF/actions`
+
+---
+
 ## Repository Git
 
 - **Remote** : `https://github.com/Cozy-Florist/RTCF.git`
-- **Token actif** : `ghp_` (scopes : repo + workflow)
 - **Branche principale** : `main`
-- **Token GitHub** : fourni par le propriétaire en session (ne pas stocker ici)
+- **Token actif** : `ghp_` classic PAT (scopes : `repo` + `workflow`) — fourni en session, ne pas stocker ici
+- **Ancien nom** : `Cozy-Fleurist` → renommé `Cozy-Florist` (GitHub redirige l'ancien URL)
 
 **Structure du repo :**
 ```
 RTCF/
-├── index.html              ← app web (généré, ne pas éditer à la main)
-├── rtcf_fleurs.html        ← version standalone (pour l'exe)
-├── RTCF_Petales.exe        ← launcher Windows
+├── index.html                    ← app web (généré, ne pas éditer à la main)
+├── rtcf_fleurs.html              ← version standalone (pour l'exe)
+├── RTCF_Petales.exe              ← launcher Windows
 ├── COZY FLEURIST - Pétales FR.xlsx
+├── .github/
+│   └── workflows/
+│       └── backup.yml            ← workflow GitHub Actions (backup auto)
 └── data/
-    ├── MEMORY.md           ← ce fichier
-    ├── generate_app.py     ← générateur HTML (source de vérité du code)
-    └── rtcf_launcher.py    ← launcher Python (embarque rtcf_fleurs.html)
+    ├── MEMORY.md                 ← ce fichier
+    ├── generate_app.py           ← générateur HTML (source de vérité du code)
+    ├── rtcf_launcher.py          ← launcher Python (embarque rtcf_fleurs.html)
+    └── backups/
+        ├── weekly/               ← sauvegardes hebdomadaires (JSON)
+        └── monthly/              ← sauvegardes mensuelles (JSON)
 ```
 
 ---
@@ -102,3 +131,17 @@ RTCF/
 - **PIN admin hardcodé** : `0909`, connu de Charline uniquement
 - **Warning RLS Supabase** sur `rtcf_logs` (INSERT always true) : ignoré volontairement, comportement attendu
 - **`index.html` jamais édité à la main** : toujours regénéré via `py data/generate_app.py`
+- **`.github/workflows/` à la racine** : contrainte GitHub Actions, impossible de déplacer dans `data/`
+- **Backups dans `data/backups/`** : cohérent avec le reste des fichiers de gestion
+
+---
+
+## Fonctionnalités app (implémentées)
+
+- Système de rareté : N / R / SR / SSR / UR avec badges colorés
+- Système de points : 9 / 14 / 21 / 23 / 25 / 28 / 30 pts
+- Toggle fleurs uniquement depuis l'onglet "Fleurs" (pas depuis les profils)
+- Profil : nom en gras (non modifiable) + label facultatif modifiable
+- Admin Charline (p1) : PIN 0909, accès onglet "Gérer", édition des fleurs
+- FAB "Ajouter au catalogue" uniquement sur l'onglet Fleurs
+- Barres de progression alignées (largeur fixe sur le bouton toggle)
