@@ -93,7 +93,7 @@ main{flex:1;overflow:hidden;position:relative;min-height:0}
 .prog-bar-lg{height:6px;border-radius:3px;background:#F1F5F9;margin-top:8px;overflow:hidden}
 .prog-fill-lg{height:100%;border-radius:3px;background:linear-gradient(135deg,#C2185B,#6D28D9);transition:width .5s ease}
 .prog-sub{font-size:.7rem;color:#9CA3AF;margin-top:5px}
-.qtoggle{border:1px solid transparent;border-radius:6px;padding:5px 11px;cursor:pointer;font-size:.75rem;font-weight:600;white-space:nowrap;transition:.12s;flex-shrink:0}
+.qtoggle{border:1px solid transparent;border-radius:6px;padding:5px 11px;cursor:pointer;font-size:.75rem;font-weight:600;white-space:nowrap;transition:.12s;flex-shrink:0;min-width:84px;text-align:center}
 .qtoggle.on{background:#D1FAE5;border-color:#059669;color:#047857}
 .qtoggle.off{background:#FCE4EC;border-color:#C2185B;color:#880E4F}
 .qtoggle:active{opacity:.75;transform:scale(.96)}
