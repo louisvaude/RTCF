@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Créer les dossiers de sauvegarde
-        run: mkdir -p backups/weekly backups/monthly
+        run: mkdir -p data/backups/weekly data/backups/monthly
 
       - name: Récupérer les données depuis Supabase
         run: |
@@ -32,8 +32,8 @@ jobs:
           fi
 
           DATE=$(date +%Y-%m-%d)
-          echo "$DATA" > "backups/weekly/${DATE}.json"
-          echo "Sauvegarde hebdomadaire créée : backups/weekly/${DATE}.json"
+          echo "$DATA" > "data/backups/weekly/${DATE}.json"
+          echo "Sauvegarde hebdomadaire créée : data/backups/weekly/${DATE}.json"
 
       - name: Consolidation mensuelle (1er dimanche du mois)
         run: |
@@ -46,11 +46,11 @@ jobs:
             echo "1er dimanche du mois : consolidation en cours..."
 
             # Copie le backup du jour comme sauvegarde mensuelle
-            cp "backups/weekly/${DATE}.json" "backups/monthly/${MONTH}.json"
-            echo "Mensuel créé : backups/monthly/${MONTH}.json"
+            cp "data/backups/weekly/${DATE}.json" "data/backups/monthly/${MONTH}.json"
+            echo "Mensuel créé : data/backups/monthly/${MONTH}.json"
 
             # Supprime tous les anciens fichiers hebdomadaires (sauf celui du jour)
-            find backups/weekly/ -name "*.json" ! -name "${DATE}.json" -delete
+            find data/backups/weekly/ -name "*.json" ! -name "${DATE}.json" -delete
             echo "Anciens hebdomadaires supprimés."
           else
             echo "Pas de consolidation (jour $DAY > 7)."
@@ -60,7 +60,7 @@ jobs:
         run: |
           git config user.name "Divine Sakura Bot"
           git config user.email "noreply@github.com"
-          git add backups/
+          git add data/backups/
           git diff --staged --quiet \
             && echo "Aucun changement à commiter." \
             || (git commit -m "Sauvegarde automatique $(date +%Y-%m-%d)" && git push)
