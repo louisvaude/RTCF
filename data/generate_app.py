@@ -1007,6 +1007,7 @@ html = (
     '<!DOCTYPE html>\n<html lang="fr">\n<head>\n'
     '<meta charset="UTF-8">\n'
     '<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">\n'
+    '<meta name="robots" content="noindex, nofollow">\n'
     '<meta name="theme-color" content="#C2185B">\n'
     '<title>Divine Sakura</title>\n'
     '<style>' + CSS + '</style>\n'
