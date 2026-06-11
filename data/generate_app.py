@@ -519,15 +519,16 @@ function renderProfil(){
   const pct=nF?owned.length/nF*100:0;
   let shown=moiF==='owned'?owned:moiF==='missing'?missing:D.flowers;
   if(moiQ){const q=norm(moiQ);shown=shown.filter(f=>norm(f.name).includes(q));}
-  const initials=me.short.slice(0,2).toUpperCase();
+  const initials=pseudo(me.name).split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||me.short.slice(0,2).toUpperCase();
+  const myLabel=me.label===undefined?me.short:me.label;
 
   el.innerHTML=`
     <div class="sticky-top">
       <div class="profbar">
         <div class="profavo">${initials}</div>
         <div class="profinfo">
-          <div class="profname">${esc(me.short)}</div>
-          ${(me.label||pseudo(me.name))?`<div class="proffull" onclick="openEditLabel()" title="Modifier">${esc(me.label||pseudo(me.name))} <span class="edit-lbl">modifier</span></div>`:'<div class="proffull" onclick="openEditLabel()"><span class="edit-lbl">+ Ajouter un nom</span></div>'}
+          <div class="profname">${esc(pseudo(me.name))}</div>
+          ${myLabel?`<div class="proffull" onclick="openEditLabel()" title="Modifier prénom">${esc(myLabel)} <span class="edit-lbl">modifier</span></div>`:'<div class="proffull" onclick="openEditLabel()"><span class="edit-lbl">+ Ajouter un prénom</span></div>'}
         </div>
         <button class="chg-btn" onclick="clearMe()">Changer</button>
       </div>
@@ -575,12 +576,12 @@ function renderOnboarding(el){
         </div>
       </div>
       <div class="ppgrid">
-        ${D.players.map(p=>`
+        ${D.players.map(p=>{const lbl=p.label===undefined?p.short:p.label;return`
           <button class="ppbtn" onclick="setMe('${p.id}')">
             <div class="ppbtn-ico">👤</div>
-            <div class="ppbtn-name">${esc(p.short)}</div>
-            ${(p.label||pseudo(p.name))?`<div class="ppbtn-full">${esc(p.label||pseudo(p.name))}</div>`:''}
-          </button>`).join('')}
+            <div class="ppbtn-name">${esc(pseudo(p.name))}</div>
+            ${lbl?`<div class="ppbtn-full">${esc(lbl)}</div>`:''}
+          </button>`}).join('')}
       </div>
     </div>`;
 }
@@ -588,11 +589,12 @@ function renderOnboarding(el){
 function setMoiF(f){moiF=f;renderProfil();}
 function openEditLabel(){
   const me=D.players.find(p=>p.id===myId); if(!me) return;
+  const cur=me.label===undefined?me.short:(me.label||'');
   document.getElementById('sh-body').innerHTML=`
-    <div class="sh-title">Modifier ton nom affiché</div>
-    <p style="font-size:.8rem;color:#9CA3AF;margin-bottom:12px">Laisse vide pour masquer</p>
+    <div class="sh-title">Modifier ton prénom affiché</div>
+    <p style="font-size:.8rem;color:#9CA3AF;margin-bottom:12px">Laisse vide pour le masquer</p>
     <input class="sh-input" id="sh-label-inp" type="text" maxlength="40"
-      placeholder="Nom affiché (facultatif)" value="${esc(me.label||'')}">
+      placeholder="Prénom (facultatif)" value="${esc(cur)}">
     <div class="sh-btns">
       <button class="btn btn-ghost" onclick="closeSheet()">Annuler</button>
       <button class="btn btn-pk" onclick="saveMyLabel()">Enregistrer</button>
@@ -693,10 +695,18 @@ function renderFleurs(){
       <div class="litem-right">
         ${f.points!=null?`<span class="pts">${f.points}pts</span>`:''}
         <span class="badge ${bcls(f)}">${rarityLabel(f.rarity)}</span>
-        <span class="chevron">›</span>
+        ${myId?`<button class="qtoggle ${isMine?'on':'off'}" onclick="event.stopPropagation();toggleMyFlower('${f.id}')">${isMine?'✓ J\'ai':'+ Ajouter'}</button>`:'<span class="chevron">›</span>'}
       </div>
     </div>`;
   }).join('');
+}
+function toggleMyFlower(fid){
+  if(!myId) return;
+  const f=D.flowers.find(x=>x.id===fid); if(!f) return;
+  const had=f.owned.includes(myId);
+  toggleOwn(fid,myId);
+  showToast(had?'Retirée de ta collection':'✓ '+f.name+' ajoutée !');
+  renderFleurs(); renderProfil();
 }
 
 // ── ÉQUIPE TAB ────────────────────────────────────────────────────────────────
@@ -713,8 +723,8 @@ function renderEquipe(){
     <div class="litem" onclick="openPlayer('${p.id}')">
       <div class="litem-ico" style="${p.id===myId?'background:#FCE4EC;color:#880E4F':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👤'}</div>
       <div class="litem-body">
-        <div class="litem-name">${esc(p.short)}${p.id===myId?' <span style="font-size:.68rem;color:#C2185B;font-weight:600">(moi)</span>':''}</div>
-        <div class="litem-sub">${esc(pseudo(p.name))}</div>
+        <div class="litem-name">${esc(pseudo(p.name))}${p.id===myId?' <span style="font-size:.68rem;color:#C2185B;font-weight:600">(moi)</span>':''}</div>
+        ${(p.label===undefined?p.short:p.label)?`<div class="litem-sub">${esc(p.label===undefined?p.short:p.label)}</div>`:''}
         <div class="bar"><div class="bar-fill bgr" style="width:${p.pct.toFixed(1)}%"></div></div>
       </div>
       <div class="litem-right">
@@ -778,13 +788,14 @@ function openPlayer(id){
 function renderPlayerDetail(id){
   const p=D.players.find(x=>x.id===id);if(!p) return;
   const nF=D.flowers.length,c=pOwned(id),pct=pPct(id);
-  const initials=p.short.slice(0,2).toUpperCase();
-  document.getElementById('pd-title').textContent=p.short+(id===myId?' (moi)':'');
+  const initials=pseudo(p.name).split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||p.short.slice(0,2).toUpperCase();
+  const pLabel=p.label===undefined?p.short:p.label;
+  document.getElementById('pd-title').textContent=pseudo(p.name)+(id===myId?' (moi)':'');
   document.getElementById('pd-body').innerHTML=`
     <div class="card" style="text-align:center;margin-bottom:14px">
       <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#C2185B,#6D28D9);color:#fff;font-size:1.1rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">${initials}</div>
-      <div style="font-weight:700;font-size:.95rem">${esc(p.short)}</div>
-      <div style="font-size:.75rem;color:#9CA3AF;margin-top:2px">${esc(pseudo(p.name))}</div>
+      <div style="font-weight:700;font-size:.95rem">${esc(pseudo(p.name))}</div>
+      ${pLabel?`<div style="font-size:.75rem;color:#9CA3AF;margin-top:2px">${esc(pLabel)}</div>`:''}
       <div style="display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:12px">
         <span style="font-size:1.6rem;font-weight:800">${c}</span>
         <span style="font-size:.8rem;color:#9CA3AF">/ ${nF} fleurs</span>
