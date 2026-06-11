@@ -76,6 +76,7 @@ Logs invisibles dans l'app, écrits dans `rtcf_logs` Supabase, lisibles uniqueme
 ## Repository Git
 
 - **Remote** : `https://github.com/Cozy-Florist/RTCF.git`
+- **Token actif** : `ghp_` (scopes : repo + workflow)
 - **Branche principale** : `main`
 - **Token GitHub** : fourni par le propriétaire en session (ne pas stocker ici)
 
