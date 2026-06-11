@@ -1,0 +1,66 @@
+name: Sauvegarde Divine Sakura
+
+on:
+  schedule:
+    - cron: '0 7 * * 0'   # Tous les dimanches à 7h00 UTC
+  workflow_dispatch:        # Déclenchement manuel depuis GitHub Actions UI
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # Nécessaire pour git push
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Créer les dossiers de sauvegarde
+        run: mkdir -p backups/weekly backups/monthly
+
+      - name: Récupérer les données depuis Supabase
+        run: |
+          DATA=$(curl -sf \
+            "https://qbuxhzvnbnjuibbusomn.supabase.co/rest/v1/rtcf_data?id=eq.1" \
+            -H "apikey: sb_publishable_0QYFdSbpvQQPBmlINtn2fw_Qeo4kDR4" \
+            -H "Authorization: Bearer sb_publishable_0QYFdSbpvQQPBmlINtn2fw_Qeo4kDR4" \
+            -H "Accept: application/json")
+
+          if [ -z "$DATA" ] || [ "$DATA" = "[]" ]; then
+            echo "Aucune donnée reçue depuis Supabase — backup annulé."
+            exit 1
+          fi
+
+          DATE=$(date +%Y-%m-%d)
+          echo "$DATA" > "backups/weekly/${DATE}.json"
+          echo "Sauvegarde hebdomadaire créée : backups/weekly/${DATE}.json"
+
+      - name: Consolidation mensuelle (1er dimanche du mois)
+        run: |
+          DAY=$(date +%d)
+          DATE=$(date +%Y-%m-%d)
+          MONTH=$(date +%Y-%m)
+
+          # Le 1er dimanche = jour ≤ 7
+          if [ "$DAY" -le 7 ]; then
+            echo "1er dimanche du mois : consolidation en cours..."
+
+            # Copie le backup du jour comme sauvegarde mensuelle
+            cp "backups/weekly/${DATE}.json" "backups/monthly/${MONTH}.json"
+            echo "Mensuel créé : backups/monthly/${MONTH}.json"
+
+            # Supprime tous les anciens fichiers hebdomadaires (sauf celui du jour)
+            find backups/weekly/ -name "*.json" ! -name "${DATE}.json" -delete
+            echo "Anciens hebdomadaires supprimés."
+          else
+            echo "Pas de consolidation (jour $DAY > 7)."
+          fi
+
+      - name: Commit et push
+        run: |
+          git config user.name "Divine Sakura Bot"
+          git config user.email "noreply@github.com"
+          git add backups/
+          git diff --staged --quiet \
+            && echo "Aucun changement à commiter." \
+            || (git commit -m "Sauvegarde automatique $(date +%Y-%m-%d)" && git push)

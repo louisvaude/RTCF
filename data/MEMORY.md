@@ -7,7 +7,7 @@
 
 ## Le projet
 
-**RTCF · Pétales** — application web mobile de suivi de collection de fleurs pour les joueuses du club RTCF (Cozy Fleurist).
+**RTCF · Pétales** — application web mobile de suivi de collection de fleurs pour les joueuses du club RTCF (Cozy Florist).
 
 - Chaque joueuse a un profil et peut cocher les fleurs qu'elle possède
 - Vue équipe avec classement, vue détail par fleur/joueuse, graphique donut de rareté
@@ -75,7 +75,7 @@ Logs invisibles dans l'app, écrits dans `rtcf_logs` Supabase, lisibles uniqueme
 
 ## Repository Git
 
-- **Remote** : `https://github.com/Cozy-Fleurist/RTCF.git`
+- **Remote** : `https://github.com/Cozy-Florist/RTCF.git`
 - **Branche principale** : `main`
 - **Token GitHub** : fourni par le propriétaire en session (ne pas stocker ici)
 
