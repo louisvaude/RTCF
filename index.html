@@ -849,11 +849,13 @@ const POINTS_VALS=[9,14,21,23,25,28,30];
 let shMode=null,shRarity=null,shPoints=null;
 
 function rselHTML(selId,vals,cur){
-  return vals.map(v=>`<button class="rsel-btn${cur===v?' on':''}" data-sel="${selId}" data-val="${v}" onclick="shSel(this)">${v}</button>`).join('');
+  const clearOn=(cur===null||cur===undefined)?'on':'';
+  const clearBtn=`<button class="rsel-btn ${clearOn}" data-sel="${selId}" data-val="" onclick="shSel(this)">—</button>`;
+  return clearBtn+vals.map(v=>`<button class="rsel-btn${cur===v?' on':''}" data-sel="${selId}" data-val="${v}" onclick="shSel(this)">${v}</button>`).join('');
 }
 function shSel(btn){
   const selId=btn.dataset.sel, raw=btn.dataset.val;
-  const val=raw!==''&&!isNaN(raw)?Number(raw):raw;
+  const val=raw===''?null:(!isNaN(raw)?Number(raw):raw);
   if(selId==='rarity') shRarity=val; else shPoints=val;
   document.querySelectorAll(`.rsel-btn[data-sel="${selId}"]`).forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
